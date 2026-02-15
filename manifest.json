@@ -1,7 +1,7 @@
 {
   "domain": "compliance_manager",
   "name": "Compliance Manager",
-  "codeowners": ["@tuo_username"],
+  "codeowners": ["@fabriba"],
   "documentation": "https://github.com/tuo_repo/compliance_manager",
   "dependencies": [],
   "integration_type": "helper",
