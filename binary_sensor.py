@@ -108,7 +108,28 @@ class ComplianceBinarySensor(BinarySensorEntity, RestoreEntity):
             # Nota: useremo un approccio basato su eventi se questo fallisce
         
         await super().async_added_to_hass()
-        # [Resto della logica di init...]
+        # 1. Ripristino stato precedente (Snooze)
+        last_state = await self.async_get_last_state()
+        if last_state and last_state.attributes:
+            self._snooze_registry = last_state.attributes.get("snooze_registry", {})
+            self._clean_snooze_registry()
+
+        # 2. Risoluzione Entità
+        await self._resolve_monitored_entities()
+
+        # 3. Registrazione Listener e check iniziale
+        if self._monitored_entities:
+            self.async_on_remove(
+                async_track_state_change_event(
+                    self.hass,
+                    list(self._monitored_entities.keys()),
+                    self._handle_state_change
+                )
+            )
+            for entity_id in self._monitored_entities:
+                self._check_compliance(entity_id)
+            
+            self._update_sensor_state()
 
     # --- NUOVO METODO PER IL SERVIZIO SNOOZE ---
     async def async_snooze_entity(self, entity_id: str, duration: timedelta):
