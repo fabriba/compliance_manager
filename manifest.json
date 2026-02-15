@@ -2,7 +2,7 @@
   "domain": "compliance_manager",
   "name": "Compliance Manager",
   "codeowners": ["@fabriba"],
-  "documentation": "https://github.com/tuo_repo/compliance_manager",
+  "documentation": "https://github.com/fabriba/compliance_manager",
   "dependencies": [],
   "integration_type": "helper",
   "iot_class": "local_push",
