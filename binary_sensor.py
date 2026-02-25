@@ -1,6 +1,17 @@
 """Platform for sensor integration."""
 from __future__ import annotations
-import random
+from .example_sensor import ExampleSensor
+from .const import (
+    DOMAIN,
+    SEVERITY_LEVELS,
+    DEFAULT_SEVERITY,
+    SNOOZE_ATTRIBUTE,
+    GRACE_ATTRIBUTE,
+    DEFAULT_ICON,
+    DEFAULT_GRACE,
+    TESTMODE
+)
+
 from homeassistant.helpers import entity_registry as er
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
 from homeassistant.components.binary_sensor import (
@@ -21,16 +32,6 @@ from homeassistant.util import dt as dt_util
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 
-# Integration Domain
-DOMAIN = "compliance_manager"  # Change this to your actual folder name
-SEVERITY_LEVELS = {
-    "critical": 0,
-    "problem": 1,
-    "warning": 2,
-    "unusual": 3,
-    "info": 4,
-}
-DEFAULT_SEVERITY = "problem"
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
     vol.Required("sensors"): vol.All(cv.ensure_list, [{
         vol.Required("name"): cv.string,
@@ -42,6 +43,7 @@ PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
             [vol.All(
                 {
                     vol.Required("target"): cv.TARGET_SERVICE_FIELDS,
+                    vol.Optional("attribute"): cv.string,
                     vol.Optional("expected_state"): vol.Any(cv.string, vol.Coerce(float), bool),
                     vol.Optional("expected_numeric"): vol.All(
                         vol.Schema({
@@ -72,7 +74,6 @@ PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
 })
 
 
-
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -83,8 +84,9 @@ async def async_setup_platform(
 
     entities = []
     # (Optional) Example sensors
-    for n in range(10):
-        entities.append(ExampleSensor(f"sample_component_{n}"))
+    if TESTMODE:
+        for n in range(10):
+            entities.append(ExampleSensor(f"sample_component_{n}"))
 
     for s_conf in config.get("sensors", []):
         entities.append(ComplianceManagerSensor(s_conf))
@@ -116,54 +118,6 @@ async def async_setup_platform(
     )
 
 
-######### ExampleSensor #############
-class ExampleSensor(BinarySensorEntity, RestoreEntity):
-    """Example sensor."""
-    """Sensor that changes state exactly every 3-6 seconds."""
-
-    _attr_should_poll = False  # Manual timing control
-
-    def __init__(self, name: str) -> None:
-        self._attr_name = name
-        self._attr_unique_id = f"sample_compliance_{self._attr_name.lower().replace(' ', '_')}"
-        self._attr_is_on = False
-
-    async def async_added_to_hass(self) -> None:
-        """Start the cycle as soon as the sensor is ready."""
-        self._schedule_next_toggle()
-
-    def _schedule_next_toggle(self) -> None:
-        """Schedule the next state change between 3 and 6 seconds."""
-        wait_time = random.randint(3, 6)
-        next_run = dt_util.now() + timedelta(seconds=wait_time)
-
-        # Request HA for a wake-up call in the future
-        async_track_point_in_time(self.hass, self._async_handle_toggle, next_run)
-
-    async def _async_handle_toggle(self, _now) -> None:
-        """Execute the toggle and reschedule."""
-        rand = random.random()
-
-        if rand < 0.0833:
-            # 8.33% probability: State ON
-            self._attr_is_on = True
-            self._attr_available = True
-        elif rand < 0.1666:
-            # 8.33% probability: State UNAVAILABLE
-            self._attr_is_on = False  # Irrelevant if unavailable
-            self._attr_available = False
-        elif rand < 0.25:
-            # 8.33% probability: State UNKNOWN
-            self._attr_is_on = None  # Represents 'unknown' for a binary_sensor
-            self._attr_available = True
-        else:
-            # 75% probability: State OK (OFF)
-            self._attr_is_on = False
-            self._attr_available = True
-
-        self.async_write_ha_state()  # Notify the UI and ComplianceManager of the change
-        self._schedule_next_toggle()  # Restart the cycle
-
 ###############  ComplianceManagerSensor ###############
 class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
     """Compliance monitoring sensor."""
@@ -173,7 +127,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
     def __init__(self, s_conf: dict) -> None:
         self._attr_name = s_conf.get("name")
         self._attr_unique_id = s_conf.get("unique_id") or f"compliance_{self._attr_name.lower().replace(' ', '_')}"
-        self._attr_icon = s_conf.get("icon")
+        self._attr_icon = s_conf.get("icon", DEFAULT_ICON)
         self._attr_device_class = BinarySensorDeviceClass.PROBLEM
         self._rules = s_conf.get("rules", [])
         self._flattened_rules = [] #  performance-optimized version
@@ -181,6 +135,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._failing_since: dict[str, dt_util.dt.datetime] = {}
         self._timer_unsubs: dict[str, callable] = {}
         self._snooze_registry: dict[str, str] = {} # {entity_id: expiry_iso_string}
+        self._write_count = 0
 
     async def async_snooze(self, entities: list[str], duration: timedelta) -> None:
         """Add entities to the snooze registry."""
@@ -203,9 +158,16 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
 
         # RESTORE STATE FROM REBOOT
         last_state = await self.async_get_last_state()
-        if last_state and "snoozed" in last_state.attributes:
-            self._snooze_registry = dict(last_state.attributes["snoozed"])
-        self._attr_is_on = (last_state.state == "on")
+        if last_state:
+            if SNOOZE_ATTRIBUTE in last_state.attributes:
+                self._snooze_registry = dict(last_state.attributes[SNOOZE_ATTRIBUTE])
+            if GRACE_ATTRIBUTE in last_state.attributes:
+                restored_failing = last_state.attributes[GRACE_ATTRIBUTE]
+                for eid, iso_time in restored_failing.items():
+                    parsed_time = dt_util.parse_datetime(iso_time)
+                    if parsed_time:
+                        self._failing_since[eid] = parsed_time
+        self._attr_is_on = (last_state.state == "on") if last_state else False
 
         async def _setup_monitoring(_event=None):
             ent_reg = er.async_get(self.hass)
@@ -258,6 +220,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         noncompliant_rules = []
         active_violations = []
         max_severity = {"level": 4, "label": "Info"}
+        self._write_count += 1
 
         for rule in self._flattened_rules:      #can be replaced with self._rules
             eid = rule["target"]["entity_id"] #it's only one if using self._flattened_rules
@@ -272,12 +235,12 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             # --------------------
 
             state_obj = self.hass.states.get(eid)
-            if await self._is_noncompliant(rule, state_obj):
+            if self._is_noncompliant(rule, state_obj):
                 noncompliant_rules.append(rule)
 
         for rule in noncompliant_rules:
             eid = rule["target"]["entity_id"]
-            grace_delta = rule.get("grace_period", timedelta(0))
+            grace_delta = rule.get("grace_period", DEFAULT_GRACE)
             rule_sev_raw = rule.get("severity", DEFAULT_SEVERITY)
 
             first_fail_time = self._failing_since.setdefault(eid, dt_util.now())
@@ -304,6 +267,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
 
         all_violations_eids = [v["entity_id"] for v in active_violations]
         all_noncompliant_eids = [r["target"]["entity_id"] for r in noncompliant_rules]
+        failing_since_iso = {k: v.isoformat() for k, v in self._failing_since.items()}
         for eid in list(self._failing_since.keys()): #this creates a copy, so the pop doesn't change dict size
             if eid not in all_noncompliant_eids:
                 # if it's back to a compliant state, reset failing_since
@@ -321,23 +285,32 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             "raw_violation_entities": all_noncompliant_eids,
             "violations_count": len(active_violations),
             "status": "Non-Compliant" if self._attr_is_on else "Compliant",
-            "snoozed": self._snooze_registry,
-            "severity": max_severity["label"] if self._attr_is_on else None
+            SNOOZE_ATTRIBUTE: self._snooze_registry,
+            GRACE_ATTRIBUTE: failing_since_iso,
+            "severity": max_severity["label"] if self._attr_is_on else None,
+            "write_operations": self._write_count
         }
 
-    async def _is_noncompliant(self, rule: dict, state_obj: State | None) -> bool:
+    def _is_noncompliant(self, rule: dict, state_obj: State | None) -> bool:
         """Valuta se una singola regola è in stato di non-compliance."""
 
         # 1. Se l'entità non esiste
         if state_obj is None:
             return True
 
-        state_val = state_obj.state
+        target_attr = rule.get("attribute")
+        if target_attr:
+            # if attribute exists, we use that instead of state
+            if target_attr not in state_obj.attributes:
+                return True
+            val_to_check = state_obj.attributes[target_attr]
+        else:
+            val_to_check = state_obj.state
 
         # 2. Controllo stati speciali (unavailable/unknown)
-        if state_val == "unavailable":
+        if val_to_check == "unavailable":
             return not rule.get("allow_unavailable", False)
-        if state_val == "unknown":
+        if val_to_check == "unknown":
             return not rule.get("allow_unknown", False)
 
         # 3. Valutazione basata sul tipo di regola
@@ -348,7 +321,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             try:
                 # Rendering del template: deve restituire True se conforme
                 res = rule["value_template"].async_render(
-                    variables={"state": state_val, "entity": state_obj},
+                    variables={"state": val_to_check, "entity": state_obj},
                     parse_result=True
                 )
                 return not res  # Se il template è False, è non-compliant
@@ -358,7 +331,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         # B. Expected Numeric
         if "expected_numeric" in rule:
             try:
-                val = float(state_val)
+                val = float(val_to_check)
                 limits = rule["expected_numeric"]
                 if "min" in limits and val < limits["min"]:
                     return True
@@ -373,10 +346,10 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             expected = rule["expected_state"]
             if isinstance(expected, bool):
                 # Mapping booleano per stati comuni HA
-                actual_bool = state_val.lower() in ["on", "true", "home", "open", "connected"]
+                actual_bool = str(val_to_check).lower() in ["on", "true", "home", "open", "connected", "1", "yes"]
                 return actual_bool != expected
 
-            return str(state_val).lower() != str(expected).lower()
+            return str(val_to_check).lower() != str(expected).lower()
 
         return False
 
