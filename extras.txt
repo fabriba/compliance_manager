@@ -1,0 +1,29 @@
+useful template to test results:
+
+{% set s0 = states('binary_sensor.sample_component_0') %}
+{% set s1 = states('binary_sensor.sample_component_1') %}
+{% set s2 = states('binary_sensor.sample_component_2') %}
+{% set s3 = states('binary_sensor.sample_component_3') %}
+{% set s4 = states('binary_sensor.sample_component_4') %}
+{% set s5 = states('binary_sensor.sample_component_5') %}
+{% set s6 = states('binary_sensor.sample_component_6') %}
+{% set s7 = states('binary_sensor.sample_component_7') %}
+{% set s8 = states('binary_sensor.sample_component_8') %}
+{% set s9 = states('binary_sensor.sample_component_9') %}
+{% set st = states('binary_sensor.tester') %}
+{% set oc = states('binary_sensor.office_security_2') %}
+{% set sc = states('binary_sensor.server_security_2') %}
+{{ s1 }}
+{{ s2 }}
+{{ s3 }}
+> {{ oc }}
+
+{{ s4 }}
+{{ st }}
+> {{ sc }}
+{{ s5 }}
+{{ s6 }}
+
+{{ s7 }}
+{{ s8 }}
+{{ s9 }}
