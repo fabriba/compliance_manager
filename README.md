@@ -23,7 +23,7 @@ Compliance Manager is a powerful Home Assistant integration designed to monitor 
 
 1. Go to **HACS** > **Integrations** > **3 dots menu**.
 2. Select **Custom repositories**.
-3. Add `https://github.com/tuo_username/compliance_manager` with category `Integration`.
+3. Add `https://github.com/fabriba/compliance_manager` with category `Integration`.
 4. Click **Install**.
 5. Restart Home Assistant.
 
