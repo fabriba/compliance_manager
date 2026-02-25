@@ -1,65 +1,61 @@
-# Compliance Manager for Home Assistant
+# Compliance Manager 🛡️
 
-[![hacs_badge](https://img.shields.io/badge/HACS-Custom-orange.svg)](https://github.com/hacs/integration)
-![version](https://img.shields.io/badge/version-0.1.0-blue.svg)
-![license](https://img.shields.io/badge/license-MIT-green.svg)
+[![GitHub Release](https://img.shields.io/github/release/tuo_username/compliance_manager.svg?style=flat-square)](https://github.com/tuo_username/compliance_manager/releases)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
+[![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/)
 
-**Compliance Manager** è un'integrazione personalizzata avanzata che permette di monitorare la conformità dei dispositivi della tua casa intelligente. A differenza dei gruppi standard, permette di definire regole complesse, gestire periodi di tolleranza (Grace Periods) e silenziare temporaneamente le violazioni (Snooze).
+Compliance Manager is a powerful Home Assistant integration designed to monitor entity health and security compliance across your entire smart home. Unlike standard groups, it provides granular control over "non-compliant" states, grace periods, and temporary silencing (snooze).
 
----
 
-## 📖 Indice
-* [Caratteristiche](#caratteristiche)
-* [Installazione](#installazione)
-* [Configurazione](#configurazione)
-* [Esempi di Regole](#esempi-di-regole)
-* [Servizi](#servizi)
-* [Sviluppo e Debug](#sviluppo-e-debug)
 
----
+## Features
 
-## 🚀 Caratteristiche
+-   **Dynamic Targeting**: Track single entities, entire **Areas**, or **Labels**. New devices added to an area are picked up automatically.
+-   **Attribute Inspection**: Monitor specific attributes (e.g., `battery_level`, `firmware_version`) instead of just the main state.
+-   **Grace Periods**: Delay alerts to avoid false positives (e.g., only alert if a door is open for > 5 minutes).
+-   **Snooze Management**: Silencing service to ignore specific violations for a set duration.
+-   **State Restoration**: All active timers, grace periods, and snoozes persist through Home Assistant restarts.
+-   **Test Mode**: Built-in simulator for stress-testing your compliance logic.
 
-* **Targeting Dinamico**: Monitora entità singole, intere **Aree** o **Label**. I nuovi dispositivi aggiunti alle aree verranno monitorati automaticamente.
-* **Ispezione Attributi**: Supporto per il monitoraggio di attributi specifici (es. `battery_level`, `temperature`, `signal_strength`).
-* **Grace Period**: Definisce quanto tempo un'entità può rimanere fuori norma prima che il sensore principale segnali un problema.
-* **Snooze Manager**: Servizio dedicato per silenziare violazioni specifiche per una durata prestabilita.
-* **Restore State**: I timer di snooze e i periodi di grazia persistono dopo il riavvio di Home Assistant.
+## Installation
 
----
+### HACS (Recommended)
 
-## 🛠 Installazione
+1. Go to **HACS** > **Integrations** > **3 dots menu**.
+2. Select **Custom repositories**.
+3. Add `https://github.com/tuo_username/compliance_manager` with category `Integration`.
+4. Click **Install**.
+5. Restart Home Assistant.
 
-1.  Scarica i file dal repository.
-2.  Copia la cartella `compliance_manager` nella cartella `custom_components` della tua installazione di Home Assistant.
-    La struttura finale dovrà essere:
-    ```text
-    custom_components/compliance_manager/
-    ├── __init__.py
-    ├── binary_sensor.py
-    ├── const.py
-    ├── example_sensor.py
-    ├── manifest.json
-    └── services.yaml
-    ```
-3.  Riavvia Home Assistant.
+### Manual
 
----
+1. Download the `compliance_manager` folder from the [latest release](https://github.com/tuo_username/compliance_manager/releases).
+2. Copy it into your `custom_components` directory.
+3. Restart Home Assistant.
 
-## ⚙️ Configurazione
+## Configuration
 
-Aggiungi la configurazione al tuo file `configuration.yaml`. L'integrazione genera sensori di classe `problem`.
+The integration is configured via YAML. Add your sensors to `configuration.yaml`:
 
 ```yaml
 binary_sensor:
   - platform: compliance_manager
     sensors:
-      - name: "Monitoraggio Sicurezza"
-        unique_id: "compliance_security_01"
+      - name: "Security Compliance"
+        unique_id: "security_compliance_01"
         icon: "mdi:shield-check"
         rules:
-          # Esempio: Tutte le luci esterne devono essere OFF
+          # Check all doors in the Garage area
           - target:
-              area_id: "Giardino"
+              area_id: "garage"
             expected_state: "off"
+            severity: "critical"
+
+          # Monitor battery levels with a 1-hour grace period
+          - target:
+              label_id: "battery_powered_devices"
+            attribute: "battery_level"
+            expected_numeric:
+              min: 20
+            grace_period: "01:00:00"
             severity: "warning"
