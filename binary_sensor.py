@@ -8,7 +8,8 @@ from homeassistant.components.binary_sensor import (
     BinarySensorEntity,
 )
 
-from homeassistant.core import HomeAssistant
+from homeassistant.helpers.restore_state import RestoreEntity
+from homeassistant.core import HomeAssistant, State
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from datetime import timedelta
@@ -80,18 +81,44 @@ async def async_setup_platform(
 ) -> None:
     """Set up the sensor platform."""
 
-    entities: list[BinarySensorEntity] = [
-        ExampleSensor(f"sample_component_{n}") for n in range(10)
-    ]
+    entities = []
+    # (Optional) Example sensors
+    for n in range(10):
+        entities.append(ExampleSensor(f"sample_component_{n}"))
 
     for s_conf in config.get("sensors", []):
         entities.append(ComplianceManagerSensor(s_conf))
 
-    # Add entities using the provided callback
     async_add_entities(entities)
 
+    # REGISTER SERVICE AFTER ADDING ENTITIES
+    async def handle_snooze(call):
+        """Service to snooze specific violations."""
+        # This service now finds entities currently registered in HA
+        target_entities = call.data.get("entity_id", [])
+        entities_to_snooze = call.data.get("entities", [])
+        duration = call.data.get("duration")
+
+        for entity in entities:
+            # Check if this specific instance matches the targeted entity_id
+            if entity.entity_id in target_entities:
+                await entity.async_snooze(entities_to_snooze, duration)
+
+    hass.services.async_register(
+        DOMAIN,
+        "snooze",
+        handle_snooze,
+        schema=vol.Schema({
+            vol.Required("entity_id"): cv.entity_ids,
+            vol.Optional("entities"): cv.ensure_list,
+            vol.Required("duration"): cv.time_period,
+        })
+    )
+
+
 ######### ExampleSensor #############
-class ExampleSensor(BinarySensorEntity):
+class ExampleSensor(BinarySensorEntity, RestoreEntity):
+    """Example sensor."""
     """Sensor that changes state exactly every 3-6 seconds."""
 
     _attr_should_poll = False  # Manual timing control
@@ -138,7 +165,7 @@ class ExampleSensor(BinarySensorEntity):
         self._schedule_next_toggle()  # Restart the cycle
 
 ###############  ComplianceManagerSensor ###############
-class ComplianceManagerSensor(BinarySensorEntity):
+class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
     """Compliance monitoring sensor."""
 
     _attr_should_poll = False
@@ -152,9 +179,33 @@ class ComplianceManagerSensor(BinarySensorEntity):
         self._flattened_rules = [] #  performance-optimized version
         self._tracked_entities: set[str] = set()
         self._failing_since: dict[str, dt_util.dt.datetime] = {}
+        self._timer_unsubs: dict[str, callable] = {}
+        self._snooze_registry: dict[str, str] = {} # {entity_id: expiry_iso_string}
+
+    async def async_snooze(self, entities: list[str], duration: timedelta) -> None:
+        """Add entities to the snooze registry."""
+        expiry = dt_util.now() + duration
+        expiry_iso = expiry.isoformat()
+
+        # If no entities provided, snooze all currently active violations
+        if not entities:
+            entities = self._attr_extra_state_attributes.get("active_violations", [])
+
+        for eid in entities:
+            self._snooze_registry[eid] = expiry_iso
+
+        await self._evaluate_compliance()
+        self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
         """Subscribe to events only when HA is ready."""
+        await super().async_added_to_hass()
+
+        # RESTORE STATE FROM REBOOT
+        last_state = await self.async_get_last_state()
+        if last_state and "snoozed" in last_state.attributes:
+            self._snooze_registry = dict(last_state.attributes["snoozed"])
+        self._attr_is_on = (last_state.state == "on")
 
         async def _setup_monitoring(_event=None):
             ent_reg = er.async_get(self.hass)
@@ -169,8 +220,11 @@ class ComplianceManagerSensor(BinarySensorEntity):
                     # Create a copy so we don't mess with the original config object
                     new_rule = rule.copy()
                     # REWRITE the target to be pure entity_ids only:
-                    # list for analogy with self._rules, but it's a 1-items' list
-                    new_rule["target"] = {"entity_id": [eid]}
+                    new_rule["target"] = {"entity_id": eid }
+                    if "value_template" in new_rule:
+                        # template precompilation, it helps performance
+                        new_rule["value_template"].hass = self.hass
+
 
                     resolved_rules.append(new_rule)
 
@@ -186,7 +240,8 @@ class ComplianceManagerSensor(BinarySensorEntity):
                         self._update_event_handler
                     )
                 )
-            self.async_schedule_update_ha_state(True)
+            await self._evaluate_compliance()
+            self.async_write_ha_state()
 
         if self.hass.is_running:
             await _setup_monitoring()
@@ -195,100 +250,135 @@ class ComplianceManagerSensor(BinarySensorEntity):
 
     async def _update_event_handler(self, _event):
         """Handle state change events by triggering a sensor update."""
+        await self._evaluate_compliance()
         self.async_schedule_update_ha_state(True)
 
-    async def async_update(self) -> None:
+    async def _evaluate_compliance(self) -> None:
         """CORE LOGIC: evaluate rules to determine  if there is a compliance problem."""
-        noncompliant_entities = []
+        noncompliant_rules = []
         active_violations = []
         max_severity = {"level": 4, "label": "Info"}
 
         for rule in self._flattened_rules:      #can be replaced with self._rules
-            target_entities = rule["target"]["entity_id"]
-            #target_entities = self._get_entities_from_target(rule["target"]) # use this if looping on self._rules
+            eid = rule["target"]["entity_id"] #it's only one if using self._flattened_rules
+
+            # --- SNOOZE CHECK ---
+            if eid in self._snooze_registry:
+                expiry = dt_util.parse_datetime(self._snooze_registry[eid])
+                if expiry and expiry > dt_util.now():
+                    continue  # Skip this entity, it is snoozed
+                else:
+                    self._snooze_registry.pop(eid)  # Lazy cleanup of expired snooze
+            # --------------------
+
+            state_obj = self.hass.states.get(eid)
+            if await self._is_noncompliant(rule, state_obj):
+                noncompliant_rules.append(rule)
+
+        for rule in noncompliant_rules:
+            eid = rule["target"]["entity_id"]
             grace_delta = rule.get("grace_period", timedelta(0))
-            rule_sev_cfg = rule.get("severity", DEFAULT_SEVERITY)
+            rule_sev_raw = rule.get("severity", DEFAULT_SEVERITY)
 
-            for eid in target_entities:
-                state_obj = self.hass.states.get(eid)
-
-
-                # If the entity does not exist at all
-                if state_obj is None:
-                    noncompliant_entities.append(eid)
-                    continue
-
-                state_val = state_obj.state
-
-                # Check special states
-                # 1. Check stati speciali (Allowed -> Reset e salta)
-                if state_val == "unavailable" and rule.get("allow_unavailable"):
-                    continue
-                if state_val == "unknown" and rule.get("allow_unknown"):
-                    continue
-                if state_val in ["unavailable", "unknown"]:
-                    noncompliant_entities.append(eid)
-                    continue
-
-                # 1. Value Template
-                if "value_template" in rule:
-                    template = rule["value_template"]
-                    # Pass both 'state' (string) and 'state_obj' (full object)
-                    res = template.async_render(variables={"state": state_val, "entity": state_obj}, parse_result=True)
-                    if not res:
-                        noncompliant_entities.append(eid)
-                        continue
-
-                # 2. Expected Numeric
-                elif "expected_numeric" in rule:
-                    try:
-                        val = float(state_val)
-                        limits = rule["expected_numeric"]
-                        if "min" in limits and val < limits["min"]:
-                            noncompliant_entities.append(eid)
-                            continue
-                        if "max" in limits and val > limits["max"]:
-                            noncompliant_entities.append(eid)
-                            continue
-                    except (ValueError, TypeError):
-                        noncompliant_entities.append(eid)
-                        continue
-
-                # 3. Expected State
-                elif "expected_state" in rule:
-                    expected = rule["expected_state"]
-                    if isinstance(expected, bool):
-                        actual_bool = state_val.lower() in ["on", "true", "home", "open"]
-                        if actual_bool != expected:
-                            noncompliant_entities.append(eid)
-                            continue
-                    else:
-                        if str(state_val).lower() != str(expected).lower():
-                            noncompliant_entities.append(eid)
-                            continue
-
-        for eid in noncompliant_entities:
             first_fail_time = self._failing_since.setdefault(eid, dt_util.now())
-            if (dt_util.now() - first_fail_time) > grace_delta:
-                active_violations.append(eid)
-
-                current_sev = self._get_severity_data(rule_sev_cfg)
+            time_since_fail = dt_util.now() - first_fail_time
+            if time_since_fail > grace_delta:
+                current_sev = self._get_severity_data(rule_sev_raw)
+                active_violations.append({
+                        'entity_id': eid,
+                        'severity': current_sev['level'],
+                        'severity_label': current_sev['label']
+                    })
                 if current_sev["level"] < max_severity["level"]:
                     max_severity = current_sev
+            else:
+                # WAITING FOR GRACE > plan a future update
+                if eid not in self._timer_unsubs:
+                    scheduled_time = first_fail_time + grace_delta
+                    self._timer_unsubs[eid] = async_track_point_in_time(
+                        self.hass,
+                        self._update_event_handler,
+                        scheduled_time
+                    )
 
+
+        all_violations_eids = [v["entity_id"] for v in active_violations]
+        all_noncompliant_eids = [r["target"]["entity_id"] for r in noncompliant_rules]
         for eid in list(self._failing_since.keys()): #this creates a copy, so the pop doesn't change dict size
-            if eid not in noncompliant_entities:
+            if eid not in all_noncompliant_eids:
                 # if it's back to a compliant state, reset failing_since
                 self._failing_since.pop(eid, None)
+                unsub = self._timer_unsubs.pop(eid, None)
+                if unsub:
+                    unsub()
 
-        self._attr_is_on = len(noncompliant_entities) > 0
+        self._attr_is_on = len(active_violations) > 0
         self._attr_extra_state_attributes = {
+            "tracked_entities": self._tracked_entities,
             "tracked_count": len(self._tracked_entities),
+            "active_violations_debug_info": active_violations,
+            "active_violations": all_violations_eids,
+            "raw_violation_entities": all_noncompliant_eids,
+            "violations_count": len(active_violations),
             "status": "Non-Compliant" if self._attr_is_on else "Compliant",
-            "problems": active_violations,
-            "problem_count": len(active_violations),
+            "snoozed": self._snooze_registry,
             "severity": max_severity["label"] if self._attr_is_on else None
         }
+
+    async def _is_noncompliant(self, rule: dict, state_obj: State | None) -> bool:
+        """Valuta se una singola regola è in stato di non-compliance."""
+
+        # 1. Se l'entità non esiste
+        if state_obj is None:
+            return True
+
+        state_val = state_obj.state
+
+        # 2. Controllo stati speciali (unavailable/unknown)
+        if state_val == "unavailable":
+            return not rule.get("allow_unavailable", False)
+        if state_val == "unknown":
+            return not rule.get("allow_unknown", False)
+
+        # 3. Valutazione basata sul tipo di regola
+        # Ordine di priorità: template > numeric > state
+
+        # A. Value Template
+        if "value_template" in rule:
+            try:
+                # Rendering del template: deve restituire True se conforme
+                res = rule["value_template"].async_render(
+                    variables={"state": state_val, "entity": state_obj},
+                    parse_result=True
+                )
+                return not res  # Se il template è False, è non-compliant
+            except Exception:
+                return True
+
+        # B. Expected Numeric
+        if "expected_numeric" in rule:
+            try:
+                val = float(state_val)
+                limits = rule["expected_numeric"]
+                if "min" in limits and val < limits["min"]:
+                    return True
+                if "max" in limits and val > limits["max"]:
+                    return True
+                return False
+            except (ValueError, TypeError):
+                return True
+
+        # C. Expected State
+        if "expected_state" in rule:
+            expected = rule["expected_state"]
+            if isinstance(expected, bool):
+                # Mapping booleano per stati comuni HA
+                actual_bool = state_val.lower() in ["on", "true", "home", "open", "connected"]
+                return actual_bool != expected
+
+            return str(state_val).lower() != str(expected).lower()
+
+        return False
 
     def _get_severity_data(self, sev_cfg):
         """Helper to parse severity config."""
