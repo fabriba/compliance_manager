@@ -8,14 +8,18 @@
 """
 from __future__ import annotations
 
+import logging
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.event import async_track_state_change_event
+from homeassistant.helpers import entity_registry as er
 
 from .const import NUM_TEST_GROUPS, TESTMODE, LAB_PREFIX
+
+_LOGGER = logging.getLogger(__name__)
 
 # Centralizing the prefix to ensure it matches __init__.py exactly
 
@@ -30,26 +34,37 @@ async def async_setup_platform(
     if not TESTMODE:
         return
 
+    ent_reg = er.async_get(hass)
     entities = []
+
     for i in range(1, NUM_TEST_GROUPS + 1):
+        unav_id = f"{LAB_PREFIX}{i}_unav"
+        unkn_id = f"{LAB_PREFIX}{i}_unkn"
+        main_id = f"{LAB_PREFIX}{i}"
+
+        # Logic to check if unique_id already exists to prevent log errors
         # 1. Create the Modifier Switches using the prefix
-        sw_unav = ModifierSwitch(f"{LAB_PREFIX}{i}_unav", f"Force Unav (G{i})")
-        sw_unkn = ModifierSwitch(f"{LAB_PREFIX}{i}_unkn", f"Force Unkn (G{i})")
+        if not ent_reg.async_get_entity_id("switch", "compliance_manager", unav_id):
+            entities.append(ModifierSwitch(unav_id, f"Force Unav (G{i})"))
+
+        if not ent_reg.async_get_entity_id("switch", "compliance_manager", unkn_id):
+            entities.append(ModifierSwitch(unkn_id, f"Force Unkn (G{i})"))
 
         # 2. Create the Main Switch using the prefix
-        main_switch = LabSwitch(i, sw_unav.entity_id, sw_unkn.entity_id)
+        if not ent_reg.async_get_entity_id("switch", "compliance_manager", main_id):
+            entities.append(LabSwitch(i, f"switch.{unav_id}", f"switch.{unkn_id}"))
 
-        entities.extend([sw_unav, sw_unkn, main_switch])
-
-    async_add_entities(entities)
+    if entities:
+        async_add_entities(entities)
 
 class ModifierSwitch(SwitchEntity, RestoreEntity):
     """Simple switch to toggle lab conditions (Unavailable/Unknown)."""
     def __init__(self, custom_id: str, name: str) -> None:
-        self.entity_id = custom_id
+        self.entity_id = f"switch.{custom_id}"
         self._attr_name = name
         # Unique ID must be truly unique, using the entity_id string is safe
-        self._attr_unique_id = f"{LAB_PREFIX}{custom_id}"
+        # FIXED: Removed the double prefixing here
+        self._attr_unique_id = custom_id
         self._attr_is_on = False
 
     async def async_added_to_hass(self) -> None:
@@ -70,9 +85,11 @@ class LabSwitch(SwitchEntity, RestoreEntity):
 
     def __init__(self, index: int, sw_unav: str, sw_unkn: str) -> None:
         # Matches the startswith check in __init__.py
-        self.entity_id = f"{LAB_PREFIX}{index}"
+        uid = f"{LAB_PREFIX}{index}"
+        self.entity_id = f"switch.{uid}"
         self._attr_name = f"Tester Switch {index}"
-        self._attr_unique_id = f"{LAB_PREFIX}{index}"
+        # FIXED: Removed the double prefixing here
+        self._attr_unique_id = uid
         self._sw_unav = sw_unav
         self._sw_unkn = sw_unkn
         self._attr_is_on = False
