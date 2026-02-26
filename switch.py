@@ -1,5 +1,10 @@
 """Test Lab for Compliance Manager.
         these switches are only created IF TESTMODE is on in const.py
+        while TESTMODE is on, an
+
+        action can be performed:
+            action: compliance_manager.cleanup_test_lab
+            data: {}
 """
 from __future__ import annotations
 
