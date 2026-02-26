@@ -1,6 +1,5 @@
 """Platform for sensor integration."""
 from __future__ import annotations
-from .example_sensor import ExampleSensor
 from .const import (
     DOMAIN,
     SEVERITY_LEVELS,
@@ -9,7 +8,8 @@ from .const import (
     GRACE_ATTRIBUTE,
     DEFAULT_ICON,
     DEFAULT_GRACE,
-    TESTMODE
+    TESTMODE,
+    SHOW_DEBUG_ATTRIBUTES
 )
 
 from homeassistant.helpers import entity_registry as er
@@ -32,47 +32,8 @@ from homeassistant.util import dt as dt_util
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 
-PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
-    vol.Required("sensors"): vol.All(cv.ensure_list, [{
-        vol.Required("name"): cv.string,
-        vol.Optional("unique_id"): cv.string,
-        vol.Optional("icon", default="mdi:shield-check"): cv.icon,
-        # This is the native HA "target" schema (entity_id, device_id, area_id, label_id)
-        vol.Required("rules"): vol.All(
-            cv.ensure_list,
-            [vol.All(
-                {
-                    vol.Required("target"): cv.TARGET_SERVICE_FIELDS,
-                    vol.Optional("attribute"): cv.string,
-                    vol.Optional("expected_state"): vol.Any(cv.string, vol.Coerce(float), bool),
-                    vol.Optional("expected_numeric"): vol.All(
-                        vol.Schema({
-                            vol.Optional("min"): vol.Coerce(float),
-                            vol.Optional("max"): vol.Coerce(float),
-                        }), cv.has_at_least_one_key("min", "max")
-                    ),
-                    vol.Optional("value_template"): cv.template,
-                    vol.Optional("grace_period", default=timedelta(seconds=0)): cv.time_period,
-                    vol.Optional("severity", default=DEFAULT_SEVERITY): vol.Any(
-                        vol.All(cv.string, vol.Lower, vol.In(SEVERITY_LEVELS.keys())),  # Accepts strings like "critical" or numberd
-                        vol.All(
-                            vol.Schema({
-                                vol.Required("level"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
-                                vol.Optional("label"): cv.string,
-                            })
-                        )
-                    ),
-                    vol.Optional("allow_unavailable", default=False): cv.boolean,
-                    vol.Optional("allow_unknown", default=False): cv.boolean,
-                }, vol.All(
-                    cv.has_at_least_one_key("expected_state", "expected_numeric", "value_template"),
-                    cv.has_at_most_one_key("expected_state", "expected_numeric", "value_template")
-                )
-            )]
-        ),
-    }]),
-})
-
+from .schema import PLATFORM_SCHEMA
+_ = PLATFORM_SCHEMA # this is just so it's not greyed out, and I am not tempted to delete the line
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -84,9 +45,6 @@ async def async_setup_platform(
 
     entities = []
     # (Optional) Example sensors
-    if TESTMODE:
-        for n in range(10):
-            entities.append(ExampleSensor(f"sample_component_{n}"))
 
     for s_conf in config.get("sensors", []):
         entities.append(ComplianceManagerSensor(s_conf))
@@ -163,29 +121,35 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 self._snooze_registry = dict(last_state.attributes[SNOOZE_ATTRIBUTE])
             if GRACE_ATTRIBUTE in last_state.attributes:
                 restored_failing = last_state.attributes[GRACE_ATTRIBUTE]
-                for eid, iso_time in restored_failing.items():
+                for grace_target, iso_time in restored_failing.items():
                     parsed_time = dt_util.parse_datetime(iso_time)
                     if parsed_time:
-                        self._failing_since[eid] = parsed_time
+                        self._failing_since[grace_target] = parsed_time
         self._attr_is_on = (last_state.state == "on") if last_state else False
 
         async def _setup_monitoring(_event=None):
-            ent_reg = er.async_get(self.hass)
+            #ent_reg = er.async_get(self.hass)
 
             # 1. Flatten the rules once at startup
             resolved_rules = []
-            for rule in self._rules:
+            for idx, rule in enumerate(self._rules):
                 # Resolve the target into a pure list of entity_ids
                 actual_eids = self._get_entities_from_target(rule["target"])
                 self._tracked_entities.update(actual_eids)
+                if rule.get("group_grace") == True:
+                    rule["grace_target"] = f"{self._attr_name}___rule_{idx}"
                 for eid in actual_eids:
                     # Create a copy so we don't mess with the original config object
                     new_rule = rule.copy()
                     # REWRITE the target to be pure entity_ids only:
                     new_rule["target"] = {"entity_id": eid }
-                    if "value_template" in new_rule:
-                        # template precompilation, it helps performance
-                        new_rule["value_template"].hass = self.hass
+                    raw_cond = new_rule.get("condition")
+                    if not isinstance(raw_cond, list):
+                        new_rule["condition"] = [raw_cond]
+
+                    for cond_item in new_rule["condition"]:
+                        self._setup_condition_templates(cond_item)
+
 
 
                     resolved_rules.append(new_rule)
@@ -209,6 +173,18 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             await _setup_monitoring()
         else:
             self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_monitoring)
+
+    async def async_will_remove_from_hass(self) -> None:
+        """Cancellazione dei timer e pulizia prima della rimozione."""
+        # Cicliamo su tutti i timer attivi e li annulliamo uno per uno
+        for eid, unsub in self._timer_unsubs.items():
+            if unsub:
+                unsub()  # Questo ferma fisicamente il timer in HA
+
+        self._timer_unsubs.clear()
+
+        # Chiamiamo sempre il metodo della classe base alla fine
+        await super().async_will_remove_from_hass()
 
     async def _update_event_handler(self, _event):
         """Handle state change events by triggering a sensor update."""
@@ -235,15 +211,18 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             # --------------------
 
             state_obj = self.hass.states.get(eid)
-            if self._is_noncompliant(rule, state_obj):
+            if self._check_rule_violation(rule, state_obj):
                 noncompliant_rules.append(rule)
 
+        active_tracking_keys = set()
         for rule in noncompliant_rules:
             eid = rule["target"]["entity_id"]
             grace_delta = rule.get("grace_period", DEFAULT_GRACE)
             rule_sev_raw = rule.get("severity", DEFAULT_SEVERITY)
+            grace_target = rule.get("grace_target", eid)
 
-            first_fail_time = self._failing_since.setdefault(eid, dt_util.now())
+            first_fail_time = self._failing_since.setdefault(grace_target, dt_util.now())
+            active_tracking_keys.add(grace_target)
             time_since_fail = dt_util.now() - first_fail_time
             if time_since_fail > grace_delta:
                 current_sev = self._get_severity_data(rule_sev_raw)
@@ -256,83 +235,115 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                     max_severity = current_sev
             else:
                 # WAITING FOR GRACE > plan a future update
-                if eid not in self._timer_unsubs:
+                if grace_target not in self._timer_unsubs:
                     scheduled_time = first_fail_time + grace_delta
-                    self._timer_unsubs[eid] = async_track_point_in_time(
+                    self._timer_unsubs[grace_target] = async_track_point_in_time(
                         self.hass,
                         self._update_event_handler,
                         scheduled_time
                     )
 
 
-        all_violations_eids = [v["entity_id"] for v in active_violations]
+        active_violations_eids = [v["entity_id"] for v in active_violations]
         all_noncompliant_eids = [r["target"]["entity_id"] for r in noncompliant_rules]
         failing_since_iso = {k: v.isoformat() for k, v in self._failing_since.items()}
-        for eid in list(self._failing_since.keys()): #this creates a copy, so the pop doesn't change dict size
-            if eid not in all_noncompliant_eids:
+        for grace_target in list(self._failing_since.keys()): #this creates a copy, so the pop doesn't change dict size
+            if grace_target not in active_tracking_keys:
                 # if it's back to a compliant state, reset failing_since
-                self._failing_since.pop(eid, None)
-                unsub = self._timer_unsubs.pop(eid, None)
+                self._failing_since.pop(grace_target, None)
+                unsub = self._timer_unsubs.pop(grace_target, None)
                 if unsub:
                     unsub()
 
         self._attr_is_on = len(active_violations) > 0
-        self._attr_extra_state_attributes = {
-            "tracked_entities": self._tracked_entities,
-            "tracked_count": len(self._tracked_entities),
-            "active_violations_debug_info": active_violations,
-            "active_violations": all_violations_eids,
-            "raw_violation_entities": all_noncompliant_eids,
+        attrs = {
+            "active_violations": active_violations_eids,
             "violations_count": len(active_violations),
             "status": "Non-Compliant" if self._attr_is_on else "Compliant",
             SNOOZE_ATTRIBUTE: self._snooze_registry,
             GRACE_ATTRIBUTE: failing_since_iso,
-            "severity": max_severity["label"] if self._attr_is_on else None,
-            "write_operations": self._write_count
+            "severity": max_severity["label"] if self._attr_is_on else None
         }
+        if SHOW_DEBUG_ATTRIBUTES:
+            attrs.update({
+            "tracked_entities": self._tracked_entities,
+            "tracked_count": len(self._tracked_entities),
+            "active_violations_debug_info": active_violations,
+            "all_noncompliant_entities": all_noncompliant_eids,
+            "write_operations": self._write_count
+            })
+        self._attr_extra_state_attributes = attrs
 
-    def _is_noncompliant(self, rule: dict, state_obj: State | None) -> bool:
-        """Valuta se una singola regola è in stato di non-compliance."""
+    def _setup_condition_templates(self, condition: Any) -> None:
+        """Recursively link Home Assistant instance to all templates in the condition."""
+        if isinstance(condition, list):
+            for item in condition:
+                self._setup_condition_templates(item)
+        elif isinstance(condition, dict):
+            if "value_template" in condition:
+                condition["value_template"].hass = self.hass
 
-        # 1. Se l'entità non esiste
+            # Check for nested logic blocks
+            for key in ["and", "or", "not"]:
+                if key in condition:
+                    self._setup_condition_templates(condition[key])
+
+    def _check_rule_violation(self, rule: dict, state_obj: State | None) -> bool:
+        """Evaluate if a rule is violated (non-compliant)."""
         if state_obj is None:
             return True
 
-        target_attr = rule.get("attribute")
-        if target_attr:
-            # if attribute exists, we use that instead of state
-            if target_attr not in state_obj.attributes:
-                return True
-            val_to_check = state_obj.attributes[target_attr]
-        else:
-            val_to_check = state_obj.state
-
-        # 2. Controllo stati speciali (unavailable/unknown)
-        if val_to_check == "unavailable":
+        if state_obj.state == "unavailable":
             return not rule.get("allow_unavailable", False)
-        if val_to_check == "unknown":
+        if state_obj.state == "unknown":
             return not rule.get("allow_unknown", False)
 
-        # 3. Valutazione basata sul tipo di regola
-        # Ordine di priorità: template > numeric > state
+        # We start the evaluation. Since rule["condition"] is a list,
+        # it's an implicit AND.
+        return self._evaluate_logic_block({"and": rule["condition"]}, state_obj)
+
+    def _evaluate_logic_block(self, item: dict | list, state_obj: State) -> bool:
+        """Recursive logic handler for and/or/not operators."""
+        # Handle lists (implicit AND)
+        if isinstance(item, list):
+            return any(self._evaluate_logic_block(i, state_obj) for i in item)
+        # Logic Operators
+        if "and" in item:
+            return any(self._evaluate_logic_block(i, state_obj) for i in item["and"])
+        if "or" in item:
+            return all(self._evaluate_logic_block(i, state_obj) for i in item["or"])
+        if "not" in item:
+            return not self._evaluate_logic_block(item["not"], state_obj)
+        # If it's not a logic operator, it MUST be an atomic condition
+        return self._check_condition_violation(item, state_obj)
+
+    def _check_condition_violation(self, condition: dict, state_obj: State) -> bool:
+        """Atomic evaluation of a single condition dictionary."""
+
+        # Resolve target value (Attribute vs State)
+        target_attr = condition.get("attribute")
+        val_to_check = state_obj.attributes.get(target_attr) if target_attr else state_obj.state
+
+        # Handle case where attribute is missing
+        if target_attr and target_attr not in state_obj.attributes:
+            return True
 
         # A. Value Template
-        if "value_template" in rule:
+        if "value_template" in condition:
             try:
-                # Rendering del template: deve restituire True se conforme
-                res = rule["value_template"].async_render(
+                res = condition["value_template"].async_render(
                     variables={"state": val_to_check, "entity": state_obj},
                     parse_result=True
                 )
-                return not res  # Se il template è False, è non-compliant
+                return not res
             except Exception:
                 return True
 
         # B. Expected Numeric
-        if "expected_numeric" in rule:
+        if "expected_numeric" in condition:
             try:
                 val = float(val_to_check)
-                limits = rule["expected_numeric"]
+                limits = condition["expected_numeric"]
                 if "min" in limits and val < limits["min"]:
                     return True
                 if "max" in limits and val > limits["max"]:
@@ -342,13 +353,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 return True
 
         # C. Expected State
-        if "expected_state" in rule:
-            expected = rule["expected_state"]
+        if "expected_state" in condition:
+            expected = condition["expected_state"]
             if isinstance(expected, bool):
-                # Mapping booleano per stati comuni HA
                 actual_bool = str(val_to_check).lower() in ["on", "true", "home", "open", "connected", "1", "yes"]
                 return actual_bool != expected
-
             return str(val_to_check).lower() != str(expected).lower()
 
         return False
