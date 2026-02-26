@@ -78,4 +78,14 @@ binary_sensor:
               expected_numeric:
                 min: 20
             allow_unavailable: false
-            severity: "info"```
+            severity: "info"
+```
+
+## Snooze Service
+action: compliance_manager.snooze
+data:
+  entity_id: binary_sensor.server_security #required, compliance_manager entity goes here
+  entities: # optional, sub-entities go here
+    - switch.compliance_manager_lab_tester_3
+  duration:
+    minutes: 30
