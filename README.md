@@ -85,8 +85,8 @@ binary_sensor:
 **Action: compliance_manager.snooze**
 ```yaml
 data:
-  entity_id: binary_sensor.server_security #required, compliance_manager entity goes here
-  entities: # optional, sub-entities go here
+  entity_id: binary_sensor.server_security          # required: compliance_manager entity goes here
+  entities:                                         # optional: sub-entities go here
     - switch.compliance_manager_lab_tester_3
   duration:
     minutes: 30
