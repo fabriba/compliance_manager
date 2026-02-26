@@ -1,7 +1,6 @@
 # Compliance Manager 🛡️
 
 [![GitHub Release](https://img.shields.io/github/release/fabriba/compliance_manager.svg?style=flat-square)](https://github.com/fabriba/compliance_manager/releases)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/)
 
 Compliance Manager is a powerful Home Assistant integration designed to monitor entities health and security compliance across your  smart home.
