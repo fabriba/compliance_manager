@@ -4,9 +4,9 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/)
 
-Compliance Manager is a powerful Home Assistant integration designed to monitor entity health and security compliance across your entire smart home.
-Unlike standard groups, it provides granular control over "non-compliant" states, grace periods, severity and temporary silencing (snooze).
+Compliance Manager is a powerful Home Assistant integration designed to monitor entities health and security compliance across your  smart home.
 
+It provides granular control over "non-compliant" states, attributes, grace periods, severity and snoozing.
 
 
 ## Features
@@ -15,8 +15,8 @@ Unlike standard groups, it provides granular control over "non-compliant" states
 -   **Attribute Inspection**: Monitor specific attributes (e.g., `battery_level`, `firmware_version`) instead of just the main state.
 -   **Grace Periods**: Delay alerts to avoid false positives (e.g., only alert if a door is open for > 5 minutes). This is a Per-Entity grace, not a group grace
 -   **Snooze Management**: Silencing service to ignore specific violations for a set duration (eg: someone is working in the garage, ignore port open for 2 hours).
--   **State Restoration**: All active timers, grace periods, and snoozes persist through Home Assistant restarts.
--   **Test Mode**: Built-in simulator for stress-testing your compliance logic. (requires tampering with the hardcoded constants in const.py, for developers only)
+-   **Reboot Persistence**: All active timers, grace periods, and snoozes persist through Home Assistant restarts.
+-   **Test Mode for developers**: Built-in lab-environment creation and cleanup for testing your compliance logic. (-- requires tampering with the hardcoded constants in const.py: intended for developers only)
 
 ## Installation
 
