@@ -65,7 +65,8 @@ binary_sensor:
             condition:
               - value_template: "{{ state | float > 18.5 and state | float < 25.0 }}"
             severity: "warning"
-            group_grace: true
+            group_grace: true       # enables a "relay" logic. The grace period will not reset if one entity becomes compliant while another already failed
+                                    # mostly relevant for long multi-hour grace periods.
             grace_period:
               minutes: 5
 
