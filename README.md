@@ -1,6 +1,6 @@
 # Compliance Manager 🛡️
 
-[![GitHub Release](https://img.shields.io/github/release/tuo_username/compliance_manager.svg?style=flat-square)](https://github.com/tuo_username/compliance_manager/releases)
+[![GitHub Release](https://img.shields.io/github/release/fabriba/compliance_manager.svg?style=flat-square)](https://github.com/fabriba/compliance_manager/releases)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/)
 
@@ -30,7 +30,7 @@ Compliance Manager is a powerful Home Assistant integration designed to monitor 
 
 ### Manual
 
-1. Download the `compliance_manager` folder from the [latest release](https://github.com/tuo_username/compliance_manager/releases).
+1. Download the `compliance_manager` folder from the [latest release](https://github.com/fabriba/compliance_manager/releases).
 2. Copy it into your `custom_components` directory.
 3. Restart Home Assistant.
 
