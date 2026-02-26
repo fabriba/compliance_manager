@@ -1,29 +1,50 @@
+snooze service call:
+
+action: compliance_manager.snooze
+data:
+  entity_id: binary_sensor.server_security #required, compliance_manager entity goes here
+  entities: # optional, sub-entities go here
+    - switch.compliance_manager_lab_tester_3
+  duration:
+    minutes: 30
+
+ #############################
+
 useful template to test results:
 
-{% set s0 = states('binary_sensor.sample_component_0') %}
-{% set s1 = states('binary_sensor.sample_component_1') %}
-{% set s2 = states('binary_sensor.sample_component_2') %}
-{% set s3 = states('binary_sensor.sample_component_3') %}
-{% set s4 = states('binary_sensor.sample_component_4') %}
-{% set s5 = states('binary_sensor.sample_component_5') %}
-{% set s6 = states('binary_sensor.sample_component_6') %}
-{% set s7 = states('binary_sensor.sample_component_7') %}
-{% set s8 = states('binary_sensor.sample_component_8') %}
-{% set s9 = states('binary_sensor.sample_component_9') %}
-{% set st = states('binary_sensor.tester') %}
-{% set oc = states('binary_sensor.office_security_2') %}
-{% set sc = states('binary_sensor.server_security_2') %}
+{% set s1 = states('switch.tester_1') %}
+{% set s2 = states('switch.tester_2') %}
+{% set s3 = states('switch.tester_3') %}
+{% set s4 = states('switch.tester_4') %}
+{% set s5 = states('switch.tester_5') %}
+{% set s6 = states('switch.tester_6') %}
+{% set s7 = states('switch.tester_7') %}
+{% set s8 = states('switch.tester_8') %}
+{% set s9 = states('switch.tester_9') %}
+
+{% set oc = states('binary_sensor.office_security') %}
+{% set sc = states('binary_sensor.server_security') %}
 {{ s1 }}
 {{ s2 }}
 {{ s3 }}
-> {{ oc }}
-
 {{ s4 }}
-{{ st }}
-> {{ sc }}
-{{ s5 }}
-{{ s6 }}
+  allow_unavailable: true
+  allow_unknown: true
+  expected_state: "off"
+> {{ oc }}
+-------------------------------------------
 
-{{ s7 }}
-{{ s8 }}
-{{ s9 }}
+{{ s1 }}
+{{ s2 }}
+{{ s3 }}
+{{ s4 }}
+  allow_unknown:     false
+  allow_unavailable: false
+  value_template: "{{ state == 'off' }}"
+  severity: "info"          # Livello 4
+  grace_period:
+    seconds: 2
+  group_grace: true
+> {{ sc }}
+
+-------------------------------------------
