@@ -12,7 +12,7 @@ Compliance Manager is a powerful Home Assistant integration designed to monitor 
 
 -   **Dynamic Targeting**: Track single entities, entire **Areas**, or **Labels**. New devices added to an area are picked up automatically.
 -   **Attribute Inspection**: Monitor specific attributes (e.g., `battery_level`, `firmware_version`) instead of just the main state.
--   **Grace Periods**: Delay alerts to avoid false positives (e.g., only alert if a door is open for > 5 minutes).
+-   **Grace Periods**: Delay alerts to avoid false positives (e.g., only alert if a door is open for > 5 minutes). This is a Per-Entity grace, not a group grace
 -   **Snooze Management**: Silencing service to ignore specific violations for a set duration.
 -   **State Restoration**: All active timers, grace periods, and snoozes persist through Home Assistant restarts.
 -   **Test Mode**: Built-in simulator for stress-testing your compliance logic.
@@ -20,6 +20,7 @@ Compliance Manager is a powerful Home Assistant integration designed to monitor 
 ## Installation
 
 ### HACS (Recommended)
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=fabriba&repository=compliance_manager)
 
 1. Go to **HACS** > **Integrations** > **3 dots menu**.
 2. Select **Custom repositories**.
