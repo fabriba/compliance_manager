@@ -4,7 +4,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE)
 [![HACS](https://img.shields.io/badge/HACS-Custom-orange.svg?style=flat-square)](https://hacs.xyz/)
 
-Compliance Manager is a powerful Home Assistant integration designed to monitor entity health and security compliance across your entire smart home. Unlike standard groups, it provides granular control over "non-compliant" states, grace periods, and temporary silencing (snooze).
+Compliance Manager is a powerful Home Assistant integration designed to monitor entity health and security compliance across your entire smart home.
+Unlike standard groups, it provides granular control over "non-compliant" states, grace periods, severity and temporary silencing (snooze).
 
 
 
@@ -13,9 +14,9 @@ Compliance Manager is a powerful Home Assistant integration designed to monitor 
 -   **Dynamic Targeting**: Track single entities, entire **Areas**, or **Labels**. New devices added to an area are picked up automatically.
 -   **Attribute Inspection**: Monitor specific attributes (e.g., `battery_level`, `firmware_version`) instead of just the main state.
 -   **Grace Periods**: Delay alerts to avoid false positives (e.g., only alert if a door is open for > 5 minutes). This is a Per-Entity grace, not a group grace
--   **Snooze Management**: Silencing service to ignore specific violations for a set duration.
+-   **Snooze Management**: Silencing service to ignore specific violations for a set duration (eg: someone is working in the garage, ignore port open for 2 hours).
 -   **State Restoration**: All active timers, grace periods, and snoozes persist through Home Assistant restarts.
--   **Test Mode**: Built-in simulator for stress-testing your compliance logic.
+-   **Test Mode**: Built-in simulator for stress-testing your compliance logic. (requires tampering with the hardcoded constants in const.py, for developers only)
 
 ## Installation
 
@@ -42,24 +43,39 @@ The integration is configured via YAML. Add your sensors to `configuration.yaml`
 binary_sensor:
   - platform: compliance_manager
     sensors:
-      - name: "Security Compliance"
-        unique_id: "security_compliance_01"
-        icon: "mdi:shield-check"
+      - name: "Critical Infrastructure"
+        unique_id: "compliance_critical_infra"
+        icon: "mdi:server-security"
         rules:
-          # Check all doors in the Garage area
+          # Rule 1: Area-wide check with Nested Logic
           - target:
-              area_id: "garage"
+              area_id: "server_room"
             condition:
-                expected_state: "off"
+              and: # Rule is violated if ANY sub-condition fails
+                - expected_state: "on"
+                - not:
+                    attribute: "overheating"
+                    expected_state: true
             severity: "critical"
+            grace_period: "00:02:00"
 
-          # Monitor battery levels with a 1-hour grace period
+          # Rule 2: Label-based check with Templates
           - target:
-              label_id: "battery_powered_devices"
+              label_id: "climate_sensors"
             condition:
-                - attribute: "battery_level"
-                  expected_numeric:
-                    min: 20
-            grace_period: "01:00:00"
-            group_grace: true # 1h in which there's always at least one non-com , default: False
+              - value_template: "{{ state | float > 18.5 and state | float < 25.0 }}"
             severity: "warning"
+            group_grace: true
+            grace_period:
+              minutes: 5
+
+      - name: "Battery Health"
+        unique_id: "compliance_battery_check"
+        rules:
+          - target:
+              label_id: "battery_devices"
+            condition:
+              expected_numeric:
+                min: 20
+            allow_unavailable: false
+            severity: "info"```
