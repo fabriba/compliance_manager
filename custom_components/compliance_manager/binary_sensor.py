@@ -41,7 +41,17 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None
 ) -> None:
-    """Set up the sensor platform."""
+    """    Sets up the compliance_manager binary sensor platform.
+    Initializes global domain data, instantiates ComplianceManagerSensor
+    objects from the YAML configuration, and registers the 'snooze'
+    service for managing active violations.
+    """
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN].update({
+        "test_mode": config.get("test_mode", False),
+        "test_groups_to_create": config.get("test_groups_to_create", 0),
+        "show_cleanup_lab_service": config.get("show_cleanup_lab_service", False),
+    })
 
     entities = []
     # (Optional) Example sensors
@@ -53,7 +63,11 @@ async def async_setup_platform(
 
     # REGISTER SERVICE AFTER ADDING ENTITIES
     async def handle_snooze(call):
-        """Service to snooze specific violations."""
+        """    Service handler for silencing specific compliance violations.
+        It parses the targeted sensor and sub-entities from the service call
+        data and applies a snooze duration to the matching sensor instances
+        registered in the system.
+        """
         # This service now finds entities currently registered in HA
         target_entities = call.data.get("entity_id", [])
         entities_to_snooze = call.data.get("entities", [])
@@ -83,6 +97,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
     _attr_should_poll = False
 
     def __init__(self, s_conf: dict) -> None:
+        """        Initializes a compliance sensor instance.
+         Sets up the sensor name, unique ID, icon, and internal registries
+         for rules, tracked entities, grace periods, and snooze status
+         based on the provided configuration dictionary.
+         """
         self._attr_name = s_conf.get("name")
         self._attr_unique_id = s_conf.get("unique_id") or f"compliance_{self._attr_name.lower().replace(' ', '_')}"
         self._attr_icon = s_conf.get("icon", DEFAULT_ICON)
@@ -96,7 +115,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._write_count = 0
 
     async def async_snooze(self, entities: list[str], duration: timedelta) -> None:
-        """Add entities to the snooze registry."""
+        """        Applies a snooze period to specific sub-entities.
+        Calculates the expiry time and updates the snooze registry. If no
+        entities are specified, it automatically snoozes all currently
+        active violations for that sensor.
+        """
         expiry = dt_util.now() + duration
         expiry_iso = expiry.isoformat()
 
@@ -111,7 +134,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self.async_write_ha_state()
 
     async def async_added_to_hass(self) -> None:
-        """Subscribe to events only when HA is ready."""
+        """        Called when the sensor is added to Home Assistant.
+        Restores the previous state (snoozes and grace periods) from
+        the database and initializes the entity tracking and monitoring
+        logic once the system has fully started.
+        """
         await super().async_added_to_hass()
 
         # RESTORE STATE FROM REBOOT
@@ -128,6 +155,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._attr_is_on = (last_state.state == "on") if last_state else False
 
         async def _setup_monitoring(_event=None):
+            """        Initializes the monitoring engine for the sensor.
+              Flattens complex target rules into individual entity tracking,
+              sets up Jinga2 templates for conditions, and subscribes to
+              state change events for all relevant entities.
+              """
             #ent_reg = er.async_get(self.hass)
 
             # 1. Flatten the rules once at startup
@@ -175,24 +207,36 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             self.hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, _setup_monitoring)
 
     async def async_will_remove_from_hass(self) -> None:
-        """Cancellazione dei timer e pulizia prima della rimozione."""
-        # Cicliamo su tutti i timer attivi e li annulliamo uno per uno
+        """        Performs cleanup before the sensor is removed.
+        Explicitly cancels and clears all active grace period timers
+        in Home Assistant to prevent background tasks from running
+        on non-existent entities.
+        """
+        # Clinging on all active timers and unsubscribing them
         for eid, unsub in self._timer_unsubs.items():
             if unsub:
-                unsub()  # Questo ferma fisicamente il timer in HA
+                unsub()  # this physically stops the timer in HA
 
         self._timer_unsubs.clear()
 
-        # Chiamiamo sempre il metodo della classe base alla fine
+        # call the methos from the base class in the end
         await super().async_will_remove_from_hass()
 
     async def _update_event_handler(self, _event):
-        """Handle state change events by triggering a sensor update."""
+        """        Standard event handler for state changes.
+        Triggered whenever a tracked entity changes its state, prompting
+        a full re-evaluation of the compliance logic and a state
+        update in the Home Assistant UI.
+        """
         await self._evaluate_compliance()
         self.async_schedule_update_ha_state(True)
 
     async def _evaluate_compliance(self) -> None:
-        """CORE LOGIC: evaluate rules to determine  if there is a compliance problem."""
+        """   CORE LOGIC engine for determining sensor state.
+        Iterates through rules, checks for active snoozes, evaluates
+        violations against grace periods, and updates the final
+        binary state and attributes (severity, violation list).
+        """
         noncompliant_rules = []
         active_violations = []
         max_severity = {"level": 4, "label": "Info"}
@@ -275,7 +319,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._attr_extra_state_attributes = attrs
 
     def _setup_condition_templates(self, condition: Any) -> None:
-        """Recursively link Home Assistant instance to all templates in the condition."""
+        """        Recursively links the HA instance to condition templates.
+        Ensures that any 'value_template' defined in the YAML rules
+        has access to the Home Assistant object for proper rendering
+        of logic during evaluation.
+        """
         if isinstance(condition, list):
             for item in condition:
                 self._setup_condition_templates(item)
@@ -289,7 +337,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                     self._setup_condition_templates(condition[key])
 
     def _check_rule_violation(self, rule: dict, state_obj: State | None) -> bool:
-        """Evaluate if a rule is violated (non-compliant)."""
+        """        Evaluates a single rule against an entity's state object.
+        Handles special states like 'unavailable' and 'unknown' based
+        on the rule configuration before passing the entity to the
+        recursive logic evaluation block.
+        """
         if state_obj is None:
             return True
 
@@ -303,7 +355,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         return self._evaluate_logic_block({"and": rule["condition"]}, state_obj)
 
     def _evaluate_logic_block(self, item: dict | list, state_obj: State) -> bool:
-        """Recursive logic handler for and/or/not operators."""
+        """        Handles recursive logic operators (AND, OR, NOT).
+        Orchestrates complex rule trees by evaluating nested logic
+        blocks and calling atomic condition checks for individual
+        state or attribute comparisons.
+        """
         # Handle lists (implicit AND)
         if isinstance(item, list):
             return any(self._evaluate_logic_block(i, state_obj) for i in item)
@@ -318,7 +374,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         return self._check_condition_violation(item, state_obj)
 
     def _check_condition_violation(self, condition: dict, state_obj: State) -> bool:
-        """Atomic evaluation of a single condition dictionary."""
+        """        Performs an atomic evaluation of a specific condition.
+        Compares the target state or attribute against expected
+        numeric ranges, specific states, or rendered templates to
+        return a boolean violation result.
+        """
 
         # Resolve target value (Attribute vs State)
         target_attr = condition.get("attribute")
@@ -363,13 +423,21 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         return False
 
     def _get_severity_data(self, sev_cfg):
-        """Helper to parse severity config."""
+        """        Helper to normalize severity configuration data.
+         Converts raw severity strings or dictionaries into a standardized
+         internal format containing both a numerical level and a
+         human-readable label for reporting.
+         """
         if isinstance(sev_cfg, str):
             return {"level": SEVERITY_LEVELS.get(sev_cfg, 1), "label": sev_cfg.capitalize()}
         return {"level": sev_cfg["level"], "label": sev_cfg.get("label", f"Level {sev_cfg['level']}")}
 
     def _get_entities_from_target(self, target) -> list[str]:
-        """Helper to filter entities for the current target (resolved in async_added)."""
+        """        Resolves HA targets into a list of entity IDs.
+        Interprets configuration targets containing specific entity IDs,
+        area IDs, or labels, and queries the registry to provide a
+        comprehensive list of tracked entities.
+        """
         ent_reg = er.async_get(self.hass)
         entities = set(cv.ensure_list(target.get("entity_id", [])))
         if area_ids := target.get("area_id"):
