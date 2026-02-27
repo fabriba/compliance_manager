@@ -237,7 +237,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         """
         noncompliant_rules = []
         active_violations = []
-        max_severity = {"level": 4, "label": "Info"}
+        max_severity = {"level": 99, "label": "SeverityEvaluationFail"}
         self._write_count += 1
 
         for rule in self._flattened_rules:      #can be replaced with self._rules
@@ -301,13 +301,14 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         attrs = {
             "active_violations": active_violations_eids,
             "violations_count": len(active_violations),
-            "status": "Non-Compliant" if self._attr_is_on else "Compliant",
-            SNOOZE_ATTRIBUTE: self._snooze_registry,
-            GRACE_ATTRIBUTE: failing_since_iso,
-            "severity": max_severity["label"] if self._attr_is_on else None
+            SNOOZE_ATTRIBUTE: self._snooze_registry if  not self._attr_is_on else "",
+            GRACE_ATTRIBUTE: failing_since_iso if  not self._attr_is_on else "",
+            "severity": max_severity["level"] if self._attr_is_on else "",
+            "severity_label": max_severity["label"] if self._attr_is_on else ""
         }
         if self._show_debug_attributes:
             attrs.update({
+            "status": "Non-Compliant" if self._attr_is_on else "Compliant",
             "tracked_entities": self._tracked_entities,
             "tracked_count": len(self._tracked_entities),
             "active_violations_debug_info": active_violations,
@@ -390,7 +391,9 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         if "value_template" in condition:
             try:
                 res = condition["value_template"].async_render(
-                    variables={"state": val_to_check, "entity": state_obj},
+                    variables={"t_state": val_to_check,
+                               "t_entity": state_obj,
+                               "t_id": state_obj.entity_id },
                     parse_result=True
                 )
                 return not res
