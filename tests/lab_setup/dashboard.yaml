@@ -184,7 +184,7 @@ views:
                 entity: binary_sensor.lab_test_output_03
                 name: Result
           - type: markdown
-            content: '### Test 04: Logic OR (Expected On or Off) ; Sev=Critical'
+            content: '### Test 04: Logic OR (Expected On or Off) - Grace 5min (use to test reboot persistence); Sev=Critical'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
