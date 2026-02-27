@@ -33,6 +33,7 @@
           condition:
             expected_state: "off"
           grace_period: "00:00:10"
+          severity: warning
 
     # Test 3: Logica AND
     - name: "Lab Test Output 03"
