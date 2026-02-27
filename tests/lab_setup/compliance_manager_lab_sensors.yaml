@@ -8,7 +8,7 @@
   show_debug_attributes: true
   sensors:
     # Test 1: Semplice stato ON
-    - name: "Lab Test 01"
+    - name: "Lab Test Output 01"
       unique_id: cm_lab_test_01
       rules:
         - target:
@@ -21,7 +21,7 @@
             expected_state: "on"
 
     # Test 2: Stato OFF con Grace Period
-    - name: "Lab Test 02"
+    - name: "Lab Test Output 02"
       unique_id: cm_lab_test_02
       rules:
         - target:
@@ -35,7 +35,7 @@
           grace_period: "00:00:10"
 
     # Test 3: Logica AND
-    - name: "Lab Test 03"
+    - name: "Lab Test Output 03"
       unique_id: cm_lab_test_03
       rules:
         - target:
@@ -50,7 +50,7 @@
               - value_template: "{{ 1 == 1 }}"
 
     # Test 4: Logica OR con severità critica
-    - name: "Lab Test 04"
+    - name: "Lab Test Output 04"
       unique_id: cm_lab_test_04
       rules:
         - target:
@@ -68,7 +68,7 @@
           severity: "critical"
 
     # Test 5: Logica NOT
-    - name: "Lab Test 05"
+    - name: "Lab Test Output 05"
       unique_id: cm_lab_test_05
       rules:
         - target:
@@ -82,7 +82,7 @@
               expected_state: "off"
 
     # Test 6: Permetti Unavailable con severità numerica
-    - name: "Lab Test 06"
+    - name: "Lab Test Output 06"
       unique_id: cm_lab_test_06
       rules:
         - target:
@@ -99,7 +99,7 @@
             label: "Warning Low"
 
     # Test 7: Group Grace attivo
-    - name: "Lab Test 07"
+    - name: "Lab Test Output 07"
       unique_id: cm_lab_test_07
       rules:
         - target:
@@ -114,7 +114,7 @@
           grace_period: "00:00:20"
 
     # Test 8: Value Template complesso
-    - name: "Lab Test 08"
+    - name: "Lab Test Output 08"
       unique_id: cm_lab_test_08
       rules:
         - target:
@@ -127,7 +127,7 @@
             value_template: "{{ states(target_entity) == 'on' }}"
 
     # Test 9: Permetti Unknown
-    - name: "Lab Test 09"
+    - name: "Lab Test Output 09"
       unique_id: cm_lab_test_09
       rules:
         - target:
@@ -141,7 +141,7 @@
           allow_unknown: true
 
     # Test 10: Combinazione finale AND/NOT con severità massima
-    - name: "Lab Test 10"
+    - name: "Lab Test Output 10"
       unique_id: cm_lab_test_10
       rules:
         - target:
