@@ -130,7 +130,7 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_31
                 - switch.compliance_manager_lab_tester_32
             condition:
-              value_template: "{{ states(target_entity) == 'on' }}"
+              value_template: "{{ states(state) == 'on' }}"
 
 
       # Test 9: Permetti Unknown
