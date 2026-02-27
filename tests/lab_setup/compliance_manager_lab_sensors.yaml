@@ -6,7 +6,7 @@
 switch:
   - platform: compliance_manager
     test_mode:                true
-    test_groups_to_create:    12
+    test_groups_to_create:    40
     show_cleanup_lab_service: true
 
 binary_sensor:
