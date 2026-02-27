@@ -1,7 +1,7 @@
 from datetime import timedelta
 
 # LAB and DEBUG variables
-LAB_PREFIX = "switch.compliance_manager_lab_tester_"
+LAB_PREFIX = "compliance_manager_lab_tester_"
 
 # Integration Domain
 DOMAIN = "compliance_manager"  # Change this to your actual folder name
