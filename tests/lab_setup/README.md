@@ -14,6 +14,29 @@ The testing environment is built on three main components:
 2.  **Logic Engine**: Binary sensors (`lab_test_output_01` through `10`) configured within the Compliance component.
 3.  **UI Control Panel**: A dedicated Home Assistant dashboard to inject states and observe results in real-time.
 
+## 🚀 Deployment
+
+Follow these steps to initialize the Integration Lab:
+
+### 1. File Placement
+Ensure the following files are located within your `custom_components/compliance_manager/` directory:
+* **Mock Driver**: `switch.py` must be present. It dynamically generates the 40 testers and their override logic.
+* **Logic Config**: Your YAML configuration defining the 10 `lab_test_output` sensors must be loaded.
+
+### 2. Entity Generation
+Restart Home Assistant or reload the Integration. The system will automatically register:
+* 40 primary switches (`tester_1` to `tester_40`).
+* 80 helper switches for `unavailable` and `unknown` states.
+
+### 3. Dashboard Setup
+1. Open your Home Assistant UI.
+2. Enter **Edit Dashboard** mode -> **Add View**.
+3. Open the **Raw Configuration Editor**.
+4. Paste the provided `dashboard.yaml` code. 
+5. *Tip: For high-density testing, set the view `type: panel` to use the full width of your screen.*
+
+---
+
 ## 🛠 Developer Guide
 
 ### 1. State Injection
