@@ -33,7 +33,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
             """  Service handler to remove all test lab entities from the registry.
                 It identifies entities with the 'compliance_lab_' unique_id prefix
                 that belong to this domain and removes them to prevent registry
-                [cite_start]clutter after testing[cite: 116, 117].
+                clutter after testing
                 """
             ent_reg = er.async_get(hass)
 
