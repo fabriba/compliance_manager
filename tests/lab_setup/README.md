@@ -11,7 +11,7 @@ The testing environment is built on three main components:
     * `switch.compliance_manager_lab_tester_N`: The primary state (ON/OFF).
     * `switch.compliance_manager_lab_tester_N_unav`: Forces the state to `unavailable`.
     * `switch.compliance_manager_lab_tester_N_unkn`: Forces the state to `unknown`.
-2.  **Logic Engine**: Binary sensors (`lab_test_01` through `10`) configured within the Compliance component.
+2.  **Logic Engine**: Binary sensors (`lab_test_output_01` through `10`) configured within the Compliance component.
 3.  **UI Control Panel**: A dedicated Home Assistant dashboard to inject states and observe results in real-time.
 
 ## 🛠 Developer Guide
