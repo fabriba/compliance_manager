@@ -20,8 +20,9 @@ Follow these steps to initialize the Integration Lab:
 
 ### 1. File Placement
 Ensure the following files are located within your `custom_components/compliance_manager/` directory:
-* **Mock Driver**: `switch.py` must be present. It dynamically generates the 40 testers and their override logic.
-* **Logic Config**: Your YAML configuration defining the 10 `lab_test_output` sensors must be loaded.
+* **Mock Driver**: `switch.py`is installed with this integration. It generates the 40 testers and their override logic.
+* **Logic Config**: Your YAML configuration defining the 10 `lab_test_output` sensors must be loaded. via
+        `sensor: !include tests/lab_setup/compliance_manager_lab_sensors.yaml`
 
 ### 2. Entity Generation
 Restart Home Assistant or reload the Integration. The system will automatically register:
@@ -33,9 +34,7 @@ Restart Home Assistant or reload the Integration. The system will automatically 
 2. Enter **Edit Dashboard** mode -> **Add View**.
 3. Open the **Raw Configuration Editor**.
 4. Paste the provided `dashboard.yaml` code. 
-5. *Tip: For high-density testing, set the view `type: panel` to use the full width of your screen.*
 
----
 
 ## 🛠 Developer Guide
 
@@ -65,3 +64,23 @@ To monitor how the engine evaluates logic during state changes, monitor the logs
 ```bash
 # Real-time log monitoring
 tail -f /config/home-assistant.log | grep "compliance_manager"
+```
+
+## 🧹 Cleanup & Teardown
+
+To dismantle the Integration Lab and prevent "ghost" entities from cluttering your Home Assistant entity registry, follow this procedure:
+
+### 1. Disable Configurations
+* Remove or comment out the `!include` line in your `configuration.yaml` that loads the lab sensors.
+
+### 2. Purge the Registry
+Access **Developer Tools > Actions** (formerly Services) and run the following action:
+* **Action**: `compliance_manager.cleanup_registry`
+* this cleans up the 120 switches (4 groups of 3 for each of the 10 tests)
+* manually delete the 10 test compliance_manager sensors
+
+> [!IMPORTANT]
+> This service identifies and removes orphaned entities previously managed by the Compliance Manager that are no longer present in your YAML configuration.
+
+### 3. Finalize
+* **Restart Home Assistant**: This ensures all virtual devices are fully unloaded from the state machine and the UI dashboard is cleared of unavailable entities.
