@@ -66,7 +66,7 @@ views:
                 entity: binary_sensor.lab_test_output_01
                 name: Result
           - type: markdown
-            content: '### Test 02: Expected OFF (Grace Period 10s)'
+            content: '### Test 02: Expected OFF (Grace Period 10s; Severity Warning)'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
