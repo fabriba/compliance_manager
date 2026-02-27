@@ -27,19 +27,19 @@ CONDITION_SCHEMA = vol.All(
     cv.has_at_most_one_key("expected_state", "expected_numeric", "value_template")
 )
 
-# 2. Define a "Logic Block" that can contain Atomic Cells
-# This allows one level of nesting (Logic -> Atomic) which is usually enough for 99% of cases
+# 2. Define Logic Block - UPDATED to be recursive
 LOGIC_SCHEMA = vol.Schema({
-    vol.Optional("and"): vol.All(cv.ensure_list, [CONDITION_SCHEMA]),
-    vol.Optional("or"): vol.All(cv.ensure_list, [CONDITION_SCHEMA]),
-    vol.Optional("not"): CONDITION_SCHEMA,
+    # Usiamo vol.Self per permettere al blocco di contenere se stesso o una condizione
+    vol.Optional("and"): vol.All(cv.ensure_list, [vol.Any(CONDITION_SCHEMA, vol.Self)]),
+    vol.Optional("or"): vol.All(cv.ensure_list, [vol.Any(CONDITION_SCHEMA, vol.Self)]),
+    vol.Optional("not"): vol.Any(CONDITION_SCHEMA, vol.Self),
 })
 
-# 3. Update the Rule to accept either
-# vol.Any(Atomic, Logic, List of Atomic, List of Logic)
+# 3. Update the Final Validator
 FINAL_CONDITION_VALIDATOR = vol.Any(
     CONDITION_SCHEMA,
     LOGIC_SCHEMA,
+    # Permette anche una lista semplice che viene interpretata come AND
     vol.All(cv.ensure_list, [vol.Any(CONDITION_SCHEMA, LOGIC_SCHEMA)])
 )
 
@@ -55,8 +55,7 @@ PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
             [vol.All(
                 {
                     vol.Required("target"): cv.TARGET_SERVICE_FIELDS,
-                    vol.Required("condition"): vol.Any(CONDITION_SCHEMA, vol.All(
-                        cv.ensure_list, [CONDITION_SCHEMA])),
+                    vol.Required("condition"): FINAL_CONDITION_VALIDATOR,
                     vol.Optional("allow_unavailable", default=False): cv.boolean,
                     vol.Optional("allow_unknown", default=False): cv.boolean,
                     vol.Optional("grace_period", default=timedelta(seconds=0)): cv.time_period,
