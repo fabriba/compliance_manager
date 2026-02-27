@@ -363,7 +363,7 @@ views:
                 entity: binary_sensor.lab_test_output_06
                 name: Result
           - type: markdown
-            content: '### Test 07: Group Grace (20s)'
+            content: '### Test 07: Expected On; Group Grace (20s)'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
