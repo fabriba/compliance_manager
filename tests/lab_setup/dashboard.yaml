@@ -422,7 +422,7 @@ views:
                 entity: binary_sensor.lab_test_output_07
                 name: Result
           - type: markdown
-            content: '### Test 08: Value Template {{ states(target_entity) == "on" }}'
+            content: '### Test 08: Value Template { states(target_entity) == "on" }'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
