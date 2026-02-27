@@ -28,19 +28,24 @@ CONDITION_SCHEMA = vol.All(
 )
 
 # 2. Define Logic Block - UPDATED to be recursive
-LOGIC_SCHEMA = vol.Schema({
-    # Usiamo vol.Self per permettere al blocco di contenere se stesso o una condizione
-    vol.Optional("and"): vol.All(cv.ensure_list, [vol.Any(CONDITION_SCHEMA, vol.Self)]),
-    vol.Optional("or"): vol.All(cv.ensure_list, [vol.Any(CONDITION_SCHEMA, vol.Self)]),
-    vol.Optional("not"): vol.Any(CONDITION_SCHEMA, vol.Self),
-})
+def get_recursive_schema(depth=5):
+    """ Limits recursion to 5 to avoid infinite recursion ."""
+    current_schema = CONDITION_SCHEMA
+    for _ in range(depth):
+        current_schema = vol.Any(
+            CONDITION_SCHEMA,
+            vol.Schema({
+                vol.Optional("and"): vol.All(cv.ensure_list, [current_schema]),
+                vol.Optional("or"): vol.All(cv.ensure_list, [current_schema]),
+                vol.Optional("not"): current_schema,
+            })
+        )
+    return current_schema
 
 # 3. Update the Final Validator
 FINAL_CONDITION_VALIDATOR = vol.Any(
-    CONDITION_SCHEMA,
-    LOGIC_SCHEMA,
-    # Permette anche una lista semplice che viene interpretata come AND
-    vol.All(cv.ensure_list, [vol.Any(CONDITION_SCHEMA, LOGIC_SCHEMA)])
+    get_recursive_schema(5),
+    vol.All(cv.ensure_list, [get_recursive_schema(5)])
 )
 
 PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
