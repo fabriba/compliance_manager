@@ -9,6 +9,7 @@ from homeassistant.helpers import entity_registry as er, discovery
 
 from .const import DOMAIN, PLATFORMS
 
+
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
@@ -21,13 +22,13 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # 1. Standard reload service for the main platforms
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
-    conf = config.get("binary_sensor", [])
-    cm_config = next((item for item in conf if item.get("platform") == DOMAIN), {})
-    test_mode_enabled = cm_config.get("test_mode", False)
 
+    cmp_mgr_cfg = get_cmp_mgr_cfg(config)
+
+    test_mode = cmp_mgr_cfg.get("test_mode", False)
     # 2. Fix: Explicitly load/reload the switch platform if TESTMODE is on
-    if test_mode_enabled:
-        # This ensures that even on reload, the switch platform is triggered
+    if test_mode:
+        # This launches async_setup_platform from the switch.py file
         hass.async_create_task(
             discovery.async_load_platform(hass, "switch", DOMAIN, {}, config)
         )
@@ -58,3 +59,22 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         hass.services.async_register(DOMAIN, "cleanup_test_lab", handle_cleanup_test_lab)
 
     return True
+
+def get_cmp_mgr_cfg(global_config):
+    """
+    Extracts and merges configurations matching DOMAIN from all PLATFORMS.
+    """
+    compl_mgr_config = {}
+
+    for platform in PLATFORMS:
+        # standardizing to list to handle single-entry dicts
+        p_configs = global_config.get(platform, [])
+        if isinstance(p_configs, dict):
+            p_configs = [p_configs]
+
+        for p_conf in p_configs:
+            if p_conf.get("platform") == DOMAIN:
+                # Warning: .update() overwrites duplicate keys across different entries
+                compl_mgr_config.update(p_conf)
+
+    return compl_mgr_config

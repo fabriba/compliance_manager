@@ -1,161 +1,165 @@
 # To use this lab configuration, add the following line to your configuration.yaml:
-# sensor: !include tests/lab_setup/compliance_manager_lab_sensors.yaml
+# package: !include compliance_manager_lab_sensors.yaml
 
-- platform: compliance_manager
-  test_mode: true
-  test_groups_to_create: 40
-  show_cleanup_lab_service: true
-  show_debug_attributes: true
-  sensors:
-    # Test 1: Semplice stato ON
-    - name: "Lab Test Output 01"
-      unique_id: cm_lab_test_01
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_1
-              - switch.compliance_manager_lab_tester_2
-              - switch.compliance_manager_lab_tester_3
-              - switch.compliance_manager_lab_tester_4
-          condition:
-            expected_state: "on"
+switch:
+  - platform: compliance_manager
+    test_mode:                true
+    test_groups_to_create:    12
+    show_cleanup_lab_service: true
 
-    # Test 2: Stato OFF con Grace Period
-    - name: "Lab Test Output 02"
-      unique_id: cm_lab_test_02
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_5
-              - switch.compliance_manager_lab_tester_6
-              - switch.compliance_manager_lab_tester_7
-              - switch.compliance_manager_lab_tester_8
-          condition:
-            expected_state: "off"
-          grace_period: "00:00:10"
-          severity: warning
+binary_sensor:
+  - platform: compliance_manager
+    show_debug_attributes: true
+    sensors:
+      # Test 1: Semplice stato ON
+      - name: "Lab Test Output 01"
+        unique_id: cm_lab_test_01
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_1
+                - switch.compliance_manager_lab_tester_2
+                - switch.compliance_manager_lab_tester_3
+                - switch.compliance_manager_lab_tester_4
+            condition:
+              expected_state: "on"
 
-    # Test 3: Logica AND
-    - name: "Lab Test Output 03"
-      unique_id: cm_lab_test_03
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_9
-              - switch.compliance_manager_lab_tester_10
-              - switch.compliance_manager_lab_tester_11
-              - switch.compliance_manager_lab_tester_12
-          condition:
-            and:
-              - expected_state: "on"
-              - value_template: "{{ 1 == 1 }}"
-
-    # Test 4: Logica OR con severità critica
-    - name: "Lab Test Output 04"
-      unique_id: cm_lab_test_04
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_13
-              - switch.compliance_manager_lab_tester_14
-              - switch.compliance_manager_lab_tester_15
-              - switch.compliance_manager_lab_tester_16
-          condition:
-            or:
-              - expected_state: "on"
-              - expected_state: "off"
-          grace_period:
-            minutes: 5
-          severity: "critical"
-
-    # Test 5: Logica NOT
-    - name: "Lab Test Output 05"
-      unique_id: cm_lab_test_05
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_17
-              - switch.compliance_manager_lab_tester_18
-              - switch.compliance_manager_lab_tester_19
-              - switch.compliance_manager_lab_tester_20
-          condition:
-            not:
+      # Test 2: Stato OFF con Grace Period
+      - name: "Lab Test Output 02"
+        unique_id: cm_lab_test_02
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_5
+                - switch.compliance_manager_lab_tester_6
+                - switch.compliance_manager_lab_tester_7
+                - switch.compliance_manager_lab_tester_8
+            condition:
               expected_state: "off"
+            grace_period: "00:00:10"
 
-    # Test 6: Permetti Unavailable con severità numerica
-    - name: "Lab Test Output 06"
-      unique_id: cm_lab_test_06
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_21
-              - switch.compliance_manager_lab_tester_22
-              - switch.compliance_manager_lab_tester_23
-              - switch.compliance_manager_lab_tester_24
-          condition:
-            expected_state: "on"
-          allow_unavailable: true
-          severity:
-            level: 40
-            label: "Warning Low"
+      # Test 3: Logica AND
+      - name: "Lab Test Output 03"
+        unique_id: cm_lab_test_03
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_9
+                - switch.compliance_manager_lab_tester_10
+                - switch.compliance_manager_lab_tester_11
+                - switch.compliance_manager_lab_tester_12
+            condition:
+              and:
+                - expected_state: "on"
+                - value_template: "{{ 1 == 1 }}"
 
-    # Test 7: Group Grace attivo
-    - name: "Lab Test Output 07"
-      unique_id: cm_lab_test_07
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_25
-              - switch.compliance_manager_lab_tester_26
-              - switch.compliance_manager_lab_tester_27
-              - switch.compliance_manager_lab_tester_28
-          condition:
-            expected_state: "on"
-          group_grace: true
-          grace_period: "00:00:20"
+      # Test 4: Logica OR con severità critica
+      - name: "Lab Test Output 04"
+        unique_id: cm_lab_test_04
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_13
+                - switch.compliance_manager_lab_tester_14
+                - switch.compliance_manager_lab_tester_15
+                - switch.compliance_manager_lab_tester_16
+            condition:
+              or:
+                - expected_state: "on"
+                - expected_state: "off"
+            grace_period:
+              minutes: 5
+            severity: "critical"
 
-    # Test 8: Value Template complesso
-    - name: "Lab Test Output 08"
-      unique_id: cm_lab_test_08
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_29
-              - switch.compliance_manager_lab_tester_30
-              - switch.compliance_manager_lab_tester_31
-              - switch.compliance_manager_lab_tester_32
-          condition:
-            value_template: "{{ states(target_entity) == 'on' }}"
+      # Test 5: Logica NOT
+      - name: "Lab Test Output 05"
+        unique_id: cm_lab_test_05
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_17
+                - switch.compliance_manager_lab_tester_18
+                - switch.compliance_manager_lab_tester_19
+                - switch.compliance_manager_lab_tester_20
+            condition:
+              not:
+                expected_state: "off"
 
-    # Test 9: Permetti Unknown
-    - name: "Lab Test Output 09"
-      unique_id: cm_lab_test_09
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_33
-              - switch.compliance_manager_lab_tester_34
-              - switch.compliance_manager_lab_tester_35
-              - switch.compliance_manager_lab_tester_36
-          condition:
-            expected_state: "on"
-          allow_unknown: true
+      # Test 6: Permetti Unavailable con severità numerica
+      - name: "Lab Test Output 06"
+        unique_id: cm_lab_test_06
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_21
+                - switch.compliance_manager_lab_tester_22
+                - switch.compliance_manager_lab_tester_23
+                - switch.compliance_manager_lab_tester_24
+            condition:
+              expected_state: "on"
+            allow_unavailable: true
+            severity:
+              level: 40
+              label: "Warning Low"
 
-    # Test 10: Combinazione finale AND/NOT con severità massima
-    - name: "Lab Test Output 10"
-      unique_id: cm_lab_test_10
-      rules:
-        - target:
-            entity_id:
-              - switch.compliance_manager_lab_tester_37
-              - switch.compliance_manager_lab_tester_38
-              - switch.compliance_manager_lab_tester_39
-              - switch.compliance_manager_lab_tester_40
-          condition:
-            and:
-              - expected_state: "on"
-              - not:
-                  expected_state: "off"
-          severity:
-            level: 100
-            label: "Panic"
+      # Test 7: Group Grace attivo
+      - name: "Lab Test Output 07"
+        unique_id: cm_lab_test_07
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_25
+                - switch.compliance_manager_lab_tester_26
+                - switch.compliance_manager_lab_tester_27
+                - switch.compliance_manager_lab_tester_28
+            condition:
+              expected_state: "on"
+            group_grace: true
+            grace_period: "00:00:20"
+
+      # Test 8: Value Template complesso
+      - name: "Lab Test Output 08"
+        unique_id: cm_lab_test_08
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_29
+                - switch.compliance_manager_lab_tester_30
+                - switch.compliance_manager_lab_tester_31
+                - switch.compliance_manager_lab_tester_32
+            condition:
+              value_template: "{{ states(target_entity) == 'on' }}"
+
+
+      # Test 9: Permetti Unknown
+      - name: "Lab Test Output 09"
+        unique_id: cm_lab_test_09
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_33
+                - switch.compliance_manager_lab_tester_34
+                - switch.compliance_manager_lab_tester_35
+                - switch.compliance_manager_lab_tester_36
+            condition:
+              expected_state: "on"
+            allow_unknown: true
+
+      # Test 10: Combinazione finale AND/NOT con severità massima
+      - name: "Lab Test Output 10"
+        unique_id: cm_lab_test_10
+        rules:
+          - target:
+              entity_id:
+                - switch.compliance_manager_lab_tester_37
+                - switch.compliance_manager_lab_tester_38
+                - switch.compliance_manager_lab_tester_39
+                - switch.compliance_manager_lab_tester_40
+            condition:
+              and:
+                - expected_state: "on"
+                - not:
+                    expected_state: "off"
+            severity:
+              level: 100
+              label: "Panic"

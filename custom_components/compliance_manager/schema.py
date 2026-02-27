@@ -3,12 +3,6 @@ import homeassistant.helpers.config_validation as cv
 from datetime import timedelta
 from .const import SEVERITY_LEVELS, DEFAULT_SEVERITY
 
-TESTMODE_SETTINGS = {
-    vol.Optional("test_mode", default=False): cv.boolean,
-    vol.Optional("test_groups_to_create", default=0): cv.positive_int,
-    vol.Optional("show_cleanup_lab_service", default=False): cv.boolean,
-    vol.Optional("show_debug_attributes", default=False): cv.boolean,
-}
 
 # 1. This is your working "Atomic" cell
 CONDITION_SCHEMA = vol.All(
@@ -48,8 +42,7 @@ FINAL_CONDITION_VALIDATOR = vol.Any(
     vol.All(cv.ensure_list, [get_recursive_schema(5)])
 )
 
-PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
-    **TESTMODE_SETTINGS,
+BS_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
     vol.Required("sensors"): vol.All(cv.ensure_list, [{
         vol.Required("name"): cv.string,
         vol.Optional("unique_id"): cv.string,
@@ -78,4 +71,12 @@ PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
             )]
         ),
     }]),
+    vol.Optional("show_debug_attributes", default=False): cv.boolean,
+})
+
+SWITCH_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
+    vol.Optional("test_mode", default=False): cv.boolean,
+    vol.Optional("test_groups_to_create", default=0): cv.positive_int,
+    vol.Optional("show_cleanup_lab_service", default=False): cv.boolean,
+    vol.Optional("show_debug_attributes", default=False): cv.boolean,
 })

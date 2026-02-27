@@ -16,9 +16,11 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers import entity_registry as er
+from .schema import SWITCH_PLATFORM_SCHEMA as PLATFORM_SCHEMA
+_ = PLATFORM_SCHEMA # this is just so it's not greyed out, and I am not tempted to delete the line
 
+from .const import LAB_PREFIX
 
-from .const import LAB_PREFIX, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -37,35 +39,34 @@ async def async_setup_platform(
     triplet-switches (Main, Unav, Unkn) and registers them in the
     system for developer testing.
     """
-    conf = hass.data.get(DOMAIN, {})
-    test_mode = conf.get("test_mode", False)
-    num_groups = conf.get("test_groups_to_create", 0)
-
+    cmp_mgr_cfg = config
+    test_mode = cmp_mgr_cfg.get("test_mode", False)
+    num_groups = cmp_mgr_cfg.get("test_groups_to_create", 0)
+    _LOGGER.warning(f"PODDD [switch] {cmp_mgr_cfg=}")
     """Set up the lab switches."""
     if not test_mode or num_groups == 0:
         return
 
     ent_reg = er.async_get(hass)
     entities = []
+    # Inside async_setup_platform in switch.py
 
     for i in range(1, num_groups + 1):
         unav_id = f"{LAB_PREFIX}{i}_unav"
         unkn_id = f"{LAB_PREFIX}{i}_unkn"
         main_id = f"{LAB_PREFIX}{i}"
 
-        # Logic to check if unique_id already exists to prevent log errors
-        # 1. Create the Modifier Switches using the prefix
-        if not ent_reg.async_get_entity_id("switch", "compliance_manager", unav_id):
-            entities.append(ModifierSwitch(unav_id, f"Force Unav (G{i})"))
+        _LOGGER.warning(f"PODDD [switch] Forcing creation of group {i}")
 
-        if not ent_reg.async_get_entity_id("switch", "compliance_manager", unkn_id):
-            entities.append(ModifierSwitch(unkn_id, f"Force Unkn (G{i})"))
+        # We append all entities. HA will handle the merging based on unique_id.
+        entities.append(ModifierSwitch(unav_id, f"Force Unav (G{i})"))
+        entities.append(ModifierSwitch(unkn_id, f"Force Unkn (G{i})"))
 
-        # 2. Create the Main Switch using the prefix
-        if not ent_reg.async_get_entity_id("switch", "compliance_manager", main_id):
-            entities.append(LabSwitch(i, f"switch.{unav_id}", f"switch.{unkn_id}"))
+        # We pass the full entity_id strings to the main LabSwitch
+        entities.append(LabSwitch(i, f"switch.{unav_id}", f"switch.{unkn_id}"))
 
     if entities:
+        _LOGGER.warning(f"PODDD [switch] Registering {len(entities)} test lab entities")
         async_add_entities(entities)
 
 class ModifierSwitch(SwitchEntity, RestoreEntity):

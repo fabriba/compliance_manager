@@ -1,5 +1,6 @@
 """Platform for sensor integration."""
 from __future__ import annotations
+import logging
 from .const import (
     DOMAIN,
     SEVERITY_LEVELS,
@@ -9,6 +10,7 @@ from .const import (
     DEFAULT_ICON,
     DEFAULT_GRACE
 )
+
 
 from homeassistant.helpers import entity_registry as er
 from homeassistant.const import EVENT_HOMEASSISTANT_STARTED
@@ -30,8 +32,9 @@ from homeassistant.util import dt as dt_util
 import homeassistant.helpers.config_validation as cv
 import voluptuous as vol
 
-from .schema import PLATFORM_SCHEMA
+from .schema import BS_PLATFORM_SCHEMA as PLATFORM_SCHEMA
 _ = PLATFORM_SCHEMA # this is just so it's not greyed out, and I am not tempted to delete the line
+_LOGGER = logging.getLogger(__name__)
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -44,18 +47,14 @@ async def async_setup_platform(
     objects from the YAML configuration, and registers the 'snooze'
     service for managing active violations.
     """
-    hass.data.setdefault(DOMAIN, {})
-    hass.data[DOMAIN].update({
-        "test_mode": config.get("test_mode", False),
-        "test_groups_to_create": config.get("test_groups_to_create", 0),
-        "show_cleanup_lab_service": config.get("show_cleanup_lab_service", False),
-    })
+    cmp_mgr_cfg = config
 
     entities = []
     # (Optional) Example sensors
-
-    for s_conf in config.get("sensors", []):
+    sensors = cmp_mgr_cfg.get("sensors", [])
+    for s_conf in sensors:
         entities.append(ComplianceManagerSensor(s_conf))
+    _LOGGER.debug(f"PODDD [b_sensor] {sensors=}")
 
     async_add_entities(entities)
 

@@ -19,5 +19,3 @@ SEVERITY_LEVELS = {
 DEFAULT_SEVERITY = "problem"
 DEFAULT_ICON = "mdi:shield-check"
 DEFAULT_GRACE = timedelta(seconds=0)
-
-
