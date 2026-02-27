@@ -1,1 +1,602 @@
-
+title: Compliance Lab
+views:
+  - title: Lab Tests
+    path: compliance_lab
+    type: panel
+    cards:
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: '### Test 01: Expected ON (Simple State check)'
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_1
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_1_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_1_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_2
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_2_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_2_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_3
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_3_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_3_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_4
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_4_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_4_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_01
+                name: Result
+          - type: markdown
+            content: '### Test 02: Expected OFF (Grace Period 10s)'
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_5
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_5_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_5_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_6
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_6_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_6_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_7
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_7_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_7_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_8
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_8_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_8_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_02
+                name: Result
+          - type: markdown
+            content: '### Test 03: Logic AND (Expected ON + Template Always True)'
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_9
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_9_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_9_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_10
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_10_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_10_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_11
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_11_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_11_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_12
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_12_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_12_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_03
+                name: Result
+          - type: markdown
+            content: '### Test 04: Logic OR (Expected On or Off) ; Sev=Critical'
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_13
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_13_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_13_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_14
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_14_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_14_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_15
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_15_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_15_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_16
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_16_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_16_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_04
+                name: Result
+          - type: markdown
+            content: >-
+              ### Test 05: Logic NOT (Expected Not Off) (allow* are left default
+              and treated outside the Not clause)
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_17
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_17_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_17_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_18
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_18_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_18_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_19
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_19_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_19_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_20
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_20_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_20_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_05
+                name: Result
+          - type: markdown
+            content: '### Test 06: Allow Unavailable, Expected On ; Sev = 40 '
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_21
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_21_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_21_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_22
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_22_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_22_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_23
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_23_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_23_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_24
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_24_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_24_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_06
+                name: Result
+          - type: markdown
+            content: '### Test 07: Group Grace (20s)'
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_25
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_25_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_25_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_26
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_26_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_26_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_27
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_27_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_27_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_28
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_28_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_28_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_07
+                name: Result
+          - type: markdown
+            content: '### Test 08: Value Template {{ states(target_entity) == "on" }}'
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_29
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_29_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_29_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_30
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_30_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_30_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_31
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_31_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_31_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_32
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_32_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_32_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_08
+                name: Result
+          - type: markdown
+            content: '### Test 09: Allow Unknown, Expected On'
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_33
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_33_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_33_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_34
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_34_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_34_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_35
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_35_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_35_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_36
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_36_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_36_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_09
+                name: Result
+          - type: markdown
+            content: >-
+              ### Test 10: Logic AND-NOT (Expected on and not off); composite
+              Severity = 100 (Panic Label)
+          - type: horizontal-stack
+            cards:
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_37
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_37_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_37_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_38
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_38_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_38_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_39
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_39_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_39_unkn
+                        name: unkn
+              - type: vertical-stack
+                cards:
+                  - type: button
+                    entity: switch.compliance_manager_lab_tester_40
+                    name: State
+                  - type: horizontal-stack
+                    cards:
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_40_unav
+                        name: unav
+                      - type: button
+                        entity: switch.compliance_manager_lab_tester_40_unkn
+                        name: unkn
+              - type: entity
+                entity: binary_sensor.lab_test_10
+                name: Result
