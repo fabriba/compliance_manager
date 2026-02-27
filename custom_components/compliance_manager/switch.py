@@ -17,7 +17,8 @@ from homeassistant.helpers.restore_state import RestoreEntity
 from homeassistant.helpers.event import async_track_state_change_event
 from homeassistant.helpers import entity_registry as er
 
-from .const import NUM_TEST_GROUPS, TESTMODE, LAB_PREFIX
+
+from .const import LAB_PREFIX, DOMAIN
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,14 +31,24 @@ async def async_setup_platform(
     async_add_entities: AddEntitiesCallback,
     discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
+    """
+    Initializes the Test Lab switch environment.
+    If TESTMODE is active, it generates the requested number of
+    triplet-switches (Main, Unav, Unkn) and registers them in the
+    system for developer testing.
+    """
+    conf = hass.data.get(DOMAIN, {})
+    test_mode = conf.get("test_mode", False)
+    num_groups = conf.get("test_groups_to_create", 0)
+
     """Set up the lab switches."""
-    if not TESTMODE:
+    if not test_mode or num_groups == 0:
         return
 
     ent_reg = er.async_get(hass)
     entities = []
 
-    for i in range(1, NUM_TEST_GROUPS + 1):
+    for i in range(1, num_groups + 1):
         unav_id = f"{LAB_PREFIX}{i}_unav"
         unkn_id = f"{LAB_PREFIX}{i}_unkn"
         main_id = f"{LAB_PREFIX}{i}"
@@ -60,6 +71,11 @@ async def async_setup_platform(
 class ModifierSwitch(SwitchEntity, RestoreEntity):
     """Simple switch to toggle lab conditions (Unavailable/Unknown)."""
     def __init__(self, custom_id: str, name: str) -> None:
+        """  Initializes an override switch (Unavailable or Unknown).
+        These helper entities are used by the LabSwitch to simulate
+        hardware communication failures or undefined entity states
+        during integration testing.
+        """
         self.entity_id = f"switch.{custom_id}"
         self._attr_name = name
         # Unique ID must be truly unique, using the entity_id string is safe
@@ -68,15 +84,18 @@ class ModifierSwitch(SwitchEntity, RestoreEntity):
         self._attr_is_on = False
 
     async def async_added_to_hass(self) -> None:
+        """Restores the toggle state from the database upon startup."""
         await super().async_added_to_hass()
         if last_state := await self.async_get_last_state():
             self._attr_is_on = (last_state.state == "on")
 
     async def async_turn_on(self, **kwargs) -> None:
+        """Sets the override switch to ON and updates its state."""
         self._attr_is_on = True
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs) -> None:
+        """Sets the override switch to OFF and updates its state."""
         self._attr_is_on = False
         self.async_write_ha_state()
 
@@ -84,6 +103,11 @@ class LabSwitch(SwitchEntity, RestoreEntity):
     """The main switch being monitored by ComplianceManager."""
 
     def __init__(self, index: int, sw_unav: str, sw_unkn: str) -> None:
+        """  Initializes a primary test switch.
+        Links the main switch to its two modifier entities, allowing
+        it to dynamically change its own availability or state
+        based on the override toggles.
+        """
         # Matches the startswith check in __init__.py
         uid = f"{LAB_PREFIX}{index}"
         self.entity_id = f"switch.{uid}"
@@ -95,6 +119,11 @@ class LabSwitch(SwitchEntity, RestoreEntity):
         self._attr_is_on = False
 
     async def async_added_to_hass(self) -> None:
+        """  Sets up the lab switch in Home Assistant.
+        Restores previous state and subscribes to state change events
+        from its linked 'unav' and 'unkn' modifier switches to
+        dynamically update its own status.
+        """
         await super().async_added_to_hass()
         if last_state := await self.async_get_last_state():
             self._attr_is_on = (last_state.state == "on")
@@ -105,7 +134,11 @@ class LabSwitch(SwitchEntity, RestoreEntity):
         await self._update_availability()
 
     async def _update_availability(self, event=None) -> None:
-        """Update availability and 'unknown' status based on modifiers."""
+        """  Calculates the effective availability of the test switch.
+        Checks the status of linked modifier switches to force
+        'unavailable' or 'unknown' states, or restores normal
+        operation if no overrides are active.
+        """
         s_unav = self.hass.states.get(self._sw_unav)
         s_unkn = self.hass.states.get(self._sw_unkn)
 
@@ -123,9 +156,11 @@ class LabSwitch(SwitchEntity, RestoreEntity):
         self.async_write_ha_state()
 
     async def async_turn_on(self, **kwargs) -> None:
+        """Turns the lab switch ON."""
         self._attr_is_on = True
         self.async_write_ha_state()
 
     async def async_turn_off(self, **kwargs) -> None:
+        """Turns the lab switch OFF."""
         self._attr_is_on = False
         self.async_write_ha_state()
