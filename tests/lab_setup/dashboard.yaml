@@ -63,7 +63,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_4_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_01
+                entity: binary_sensor.lab_test_output_01
                 name: Result
           - type: markdown
             content: '### Test 02: Expected OFF (Grace Period 10s)'
@@ -122,7 +122,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_8_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_02
+                entity: binary_sensor.lab_test_output_02
                 name: Result
           - type: markdown
             content: '### Test 03: Logic AND (Expected ON + Template Always True)'
@@ -181,7 +181,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_12_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_03
+                entity: binary_sensor.lab_test_output_03
                 name: Result
           - type: markdown
             content: '### Test 04: Logic OR (Expected On or Off) ; Sev=Critical'
@@ -240,7 +240,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_16_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_04
+                entity: binary_sensor.lab_test_output_04
                 name: Result
           - type: markdown
             content: >-
@@ -301,7 +301,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_20_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_05
+                entity: binary_sensor.lab_test_output_05
                 name: Result
           - type: markdown
             content: '### Test 06: Allow Unavailable, Expected On ; Sev = 40 '
@@ -360,7 +360,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_24_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_06
+                entity: binary_sensor.lab_test_output_06
                 name: Result
           - type: markdown
             content: '### Test 07: Group Grace (20s)'
@@ -419,7 +419,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_28_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_07
+                entity: binary_sensor.lab_test_output_07
                 name: Result
           - type: markdown
             content: '### Test 08: Value Template {{ states(target_entity) == "on" }}'
@@ -478,7 +478,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_32_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_08
+                entity: binary_sensor.lab_test_output_08
                 name: Result
           - type: markdown
             content: '### Test 09: Allow Unknown, Expected On'
@@ -537,7 +537,7 @@ views:
                         entity: switch.compliance_manager_lab_tester_36_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_09
+                entity: binary_sensor.lab_test_output_09
                 name: Result
           - type: markdown
             content: >-
@@ -598,5 +598,5 @@ views:
                         entity: switch.compliance_manager_lab_tester_40_unkn
                         name: unkn
               - type: entity
-                entity: binary_sensor.lab_test_10
+                entity: binary_sensor.lab_test_output_10
                 name: Result
