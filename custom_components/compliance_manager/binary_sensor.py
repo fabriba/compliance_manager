@@ -7,9 +7,7 @@ from .const import (
     SNOOZE_ATTRIBUTE,
     GRACE_ATTRIBUTE,
     DEFAULT_ICON,
-    DEFAULT_GRACE,
-    TESTMODE,
-    SHOW_DEBUG_ATTRIBUTES
+    DEFAULT_GRACE
 )
 
 from homeassistant.helpers import entity_registry as er
@@ -113,6 +111,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._timer_unsubs: dict[str, callable] = {}
         self._snooze_registry: dict[str, str] = {} # {entity_id: expiry_iso_string}
         self._write_count = 0
+        self._show_debug_attributes =  s_conf.get("show_debug_attributes", False)
 
     async def async_snooze(self, entities: list[str], duration: timedelta) -> None:
         """        Applies a snooze period to specific sub-entities.
@@ -308,7 +307,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             GRACE_ATTRIBUTE: failing_since_iso,
             "severity": max_severity["label"] if self._attr_is_on else None
         }
-        if SHOW_DEBUG_ATTRIBUTES:
+        if self._show_debug_attributes:
             attrs.update({
             "tracked_entities": self._tracked_entities,
             "tracked_count": len(self._tracked_entities),
