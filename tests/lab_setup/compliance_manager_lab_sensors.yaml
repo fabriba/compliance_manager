@@ -3,7 +3,7 @@
 
 - platform: compliance_manager
   test_mode: true
-  test_groups_to_create: 10
+  test_groups_to_create: 40
   show_cleanup_lab_service: true
   show_debug_attributes: true
   sensors:
