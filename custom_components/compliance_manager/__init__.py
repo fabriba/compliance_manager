@@ -7,7 +7,7 @@ from homeassistant.helpers.typing import ConfigType
 from homeassistant.helpers.reload import async_setup_reload_service
 from homeassistant.helpers import entity_registry as er, discovery
 
-from .const import DOMAIN, PLATFORMS, TESTMODE
+from .const import DOMAIN, PLATFORMS
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -21,9 +21,12 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
 
     # 1. Standard reload service for the main platforms
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
+    conf = config.get("binary_sensor", [])
+    cm_config = next((item for item in conf if item.get("platform") == DOMAIN), {})
+    test_mode_enabled = cm_config.get("test_mode", False)
 
     # 2. Fix: Explicitly load/reload the switch platform if TESTMODE is on
-    if TESTMODE:
+    if test_mode_enabled:
         # This ensures that even on reload, the switch platform is triggered
         hass.async_create_task(
             discovery.async_load_platform(hass, "switch", DOMAIN, {}, config)
