@@ -39,6 +39,7 @@ binary_sensor:
             condition:
               expected_state: "off"
             grace_period: "00:00:10"
+            severity: warning
 
       # Test 3: Logica AND
       - name: "Lab Test Output 03"
@@ -130,7 +131,7 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_31
                 - switch.compliance_manager_lab_tester_32
             condition:
-              value_template: "{{ states(state) == 'on' }}"
+              value_template: "{{ states(t_id) == 'on' and t_state == 'on' and states(t_entity.entity_id) == 'on' }}"
 
 
       # Test 9: Permetti Unknown
