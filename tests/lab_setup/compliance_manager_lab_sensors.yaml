@@ -1,5 +1,7 @@
 # To use this lab configuration, add the following line to your configuration.yaml:
-# package: !include compliance_manager_lab_sensors.yaml
+#homeassistant:
+#  packages:
+#    compliance_lab: !include compliance_manager_lab_sensors.yaml
 
 switch:
   - platform: compliance_manager
