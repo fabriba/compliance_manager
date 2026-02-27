@@ -12,7 +12,12 @@ from .const import DOMAIN, PLATFORMS, TESTMODE
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
-    """Set up the Compliance Manager component."""
+    """ Initializes the Compliance Manager component.
+        Sets up the standard reload service and, if TESTMODE is enabled,
+        dynamically loads the switch platform for the lab environment.
+        It also registers the 'cleanup_test_lab' service to purge lab-related
+        entities from the Home Assistant registry
+    """
 
     # 1. Standard reload service for the main platforms
     await async_setup_reload_service(hass, DOMAIN, PLATFORMS)
@@ -25,7 +30,11 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
         )
 
         async def handle_cleanup_test_lab(call):
-            """Remove all lab entities from the registry."""
+            """  Service handler to remove all test lab entities from the registry.
+                It identifies entities with the 'compliance_lab_' unique_id prefix
+                that belong to this domain and removes them to prevent registry
+                [cite_start]clutter after testing[cite: 116, 117].
+                """
             ent_reg = er.async_get(hass)
 
             # Using the unique_id prefix which is the most reliable way
