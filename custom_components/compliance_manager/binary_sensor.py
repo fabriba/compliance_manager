@@ -5,10 +5,9 @@ from .const import (
     DOMAIN,
     SEVERITY_LEVELS,
     DEFAULT_SEVERITY,
-    SNOOZE_ATTRIBUTE,
-    GRACE_ATTRIBUTE,
     DEFAULT_ICON,
-    DEFAULT_GRACE
+    DEFAULT_GRACE,
+    ComplianceManagerAttributes as ATTRIBUTES
 )
 
 
@@ -53,8 +52,10 @@ async def async_setup_platform(
     # (Optional) Example sensors
     sensors = cmp_mgr_cfg.get("sensors", [])
     for s_conf in sensors:
+        # ToDo: injectiing show_debug_attributes is inelegant, find a better way
+        s_conf["show_debug_attributes"] = cmp_mgr_cfg.get("show_debug_attributes", False)
         entities.append(ComplianceManagerSensor(s_conf))
-    _LOGGER.debug(f"PODDD [b_sensor] {sensors=}")
+
 
     async_add_entities(entities)
 
@@ -106,11 +107,11 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._rules = s_conf.get("rules", [])
         self._flattened_rules = [] #  performance-optimized version
         self._tracked_entities: set[str] = set()
-        self._failing_since: dict[str, dt_util.dt.datetime] = {}
-        self._timer_unsubs: dict[str, callable] = {}
         self._snooze_registry: dict[str, str] = {} # {entity_id: expiry_iso_string}
+        self._failing_since: dict[str, str] = {} # {grace_target: first_fail_iso_string}
+        self._timer_unsubs: dict[str, callable] = {}
         self._write_count = 0
-        self._show_debug_attributes =  s_conf.get("show_debug_attributes", False)
+        self._config = s_conf
 
     async def async_snooze(self, entities: list[str], duration: timedelta) -> None:
         """        Applies a snooze period to specific sub-entities.
@@ -127,6 +128,21 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
 
         for eid in entities:
             self._snooze_registry[eid] = expiry_iso
+            # --------------------------------------------
+            # TODO:  timer creation (make this into a function) ---
+            snooze_timer_key = f"snooze_{eid}"
+            # Delete old snooze timers before proceeding
+            if old_unsub := self._timer_unsubs.pop(snooze_timer_key, None):
+                old_unsub()
+
+            # Plan a state check for when the timer expires
+            self._timer_unsubs[snooze_timer_key] = async_track_point_in_time(
+                self.hass,
+                self._update_event_handler,
+                expiry
+            )
+            # --------------------------------------------
+
 
         await self._evaluate_compliance()
         self.async_write_ha_state()
@@ -142,14 +158,12 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         # RESTORE STATE FROM REBOOT
         last_state = await self.async_get_last_state()
         if last_state:
-            if SNOOZE_ATTRIBUTE in last_state.attributes:
-                self._snooze_registry = dict(last_state.attributes[SNOOZE_ATTRIBUTE])
-            if GRACE_ATTRIBUTE in last_state.attributes:
-                restored_failing = last_state.attributes[GRACE_ATTRIBUTE]
-                for grace_target, iso_time in restored_failing.items():
-                    parsed_time = dt_util.parse_datetime(iso_time)
-                    if parsed_time:
-                        self._failing_since[grace_target] = parsed_time
+            if ATTRIBUTES.SNOOZE_REGISTRY in last_state.attributes:
+                self._snooze_registry = dict(last_state.attributes[ATTRIBUTES.SNOOZE_REGISTRY])
+            if ATTRIBUTES.VIOLATION_REGISTRY in last_state.attributes:
+                _d = last_state.attributes.get(ATTRIBUTES.VIOLATION_REGISTRY)
+                self._failing_since = dict(_d) if isinstance(_d, dict) else {}
+
         self._attr_is_on = (last_state.state == "on") if last_state else False
 
         async def _setup_monitoring(_event=None):
@@ -263,7 +277,8 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             rule_sev_raw = rule.get("severity", DEFAULT_SEVERITY)
             grace_target = rule.get("grace_target", eid)
 
-            first_fail_time = self._failing_since.setdefault(grace_target, dt_util.now())
+            self._failing_since.setdefault(grace_target, dt_util.now().isoformat())
+            first_fail_time = dt_util.parse_datetime(self._failing_since[grace_target])
             active_tracking_keys.add(grace_target)
             time_since_fail = dt_util.now() - first_fail_time
             if time_since_fail > grace_delta:
@@ -287,8 +302,6 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
 
 
         active_violations_eids = [v["entity_id"] for v in active_violations]
-        all_noncompliant_eids = [r["target"]["entity_id"] for r in noncompliant_rules]
-        failing_since_iso = {k: v.isoformat() for k, v in self._failing_since.items()}
         for grace_target in list(self._failing_since.keys()): #this creates a copy, so the pop doesn't change dict size
             if grace_target not in active_tracking_keys:
                 # if it's back to a compliant state, reset failing_since
@@ -297,23 +310,25 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 if unsub:
                     unsub()
 
+
+
+        grace_period_display = list({ str( rule["grace_period"]) for rule in self._rules if "grace_period" in rule})
         self._attr_is_on = len(active_violations) > 0
         attrs = {
-            "active_violations": active_violations_eids,
-            "violations_count": len(active_violations),
-            SNOOZE_ATTRIBUTE: self._snooze_registry if  not self._attr_is_on else "",
-            GRACE_ATTRIBUTE: failing_since_iso if  not self._attr_is_on else "",
-            "severity": max_severity["level"] if self._attr_is_on else "",
-            "severity_label": max_severity["label"] if self._attr_is_on else ""
+            ATTRIBUTES.SEVERITY: max_severity["level"] if self._attr_is_on else "",
+            ATTRIBUTES.SEVERITY_LABEL: max_severity["label"] if self._attr_is_on else "",
+            ATTRIBUTES.GRACE_PERIODS: grace_period_display,
+            ATTRIBUTES.ACTIVE_VIOLATIONS: active_violations_eids,
+            ATTRIBUTES.ACTIVE_COUNT: len(active_violations),
+            ATTRIBUTES.SNOOZE_REGISTRY: self._snooze_registry, # if  not self._attr_is_on else {},
         }
-        if self._show_debug_attributes:
+        if self._config.get("show_debug_attributes", False):
             attrs.update({
-            "status": "Non-Compliant" if self._attr_is_on else "Compliant",
-            "tracked_entities": self._tracked_entities,
-            "tracked_count": len(self._tracked_entities),
-            "active_violations_debug_info": active_violations,
-            "all_noncompliant_entities": all_noncompliant_eids,
-            "write_operations": self._write_count
+            ATTRIBUTES.VIOLATION_REGISTRY: self._failing_since, # if  not self._attr_is_on else {},
+            ATTRIBUTES.TRACKED_ENTITIES: self._tracked_entities,
+            ATTRIBUTES.VIOLATIONS_DEBUG: active_violations,
+            ATTRIBUTES.STATUS: "Non-Compliant" if self._attr_is_on else "Compliant",
+            ATTRIBUTES.WRITE_OPS: self._write_count
             })
         self._attr_extra_state_attributes = attrs
 

@@ -57,13 +57,23 @@ binary_sensor:
                 - value_template: "{{ 1 == 1 }}"
 
       # Test 4: Logica OR con severità critica
-      - name: "Lab Test Output 04"
+      - alias: "Lab Test Output 04: Exp On/Off, Grace 5min (switch a/b) or 5 sec( c/d)"
+        name: "Lab Test Output 04"
         unique_id: cm_lab_test_04
         rules:
           - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_13
                 - switch.compliance_manager_lab_tester_14
+            condition:
+              or:
+                - expected_state: "on"
+                - expected_state: "off"
+            grace_period:
+              minutes: 5
+            severity: "critical"
+          - target:
+              entity_id:
                 - switch.compliance_manager_lab_tester_15
                 - switch.compliance_manager_lab_tester_16
             condition:
@@ -71,7 +81,7 @@ binary_sensor:
                 - expected_state: "on"
                 - expected_state: "off"
             grace_period:
-              minutes: 5
+              seconds: 5
             severity: "critical"
 
       # Test 5: Logica NOT

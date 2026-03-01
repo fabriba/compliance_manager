@@ -7,6 +7,7 @@ from .const import SEVERITY_LEVELS, DEFAULT_SEVERITY
 # 1. This is your working "Atomic" cell
 CONDITION_SCHEMA = vol.All(
     {
+        vol.Optional("alias"): cv.string,
         vol.Optional("attribute"): cv.string,
         vol.Optional("expected_state"): vol.Any(cv.string, vol.Coerce(float), bool),
         vol.Optional("expected_numeric"): vol.All(
@@ -28,11 +29,15 @@ def get_recursive_schema(depth=5):
     for _ in range(depth):
         current_schema = vol.Any(
             CONDITION_SCHEMA,
-            vol.Schema({
-                vol.Optional("and"): vol.All(cv.ensure_list, [current_schema]),
-                vol.Optional("or"): vol.All(cv.ensure_list, [current_schema]),
-                vol.Optional("not"): current_schema,
-            })
+            vol.All(
+                vol.Schema({
+                    vol.Optional("alias"): cv.string,
+                    vol.Optional("and"): vol.All(cv.ensure_list, [current_schema]),
+                    vol.Optional("or"): vol.All(cv.ensure_list, [current_schema]),
+                    vol.Optional("not"): current_schema,
+                }),
+                cv.has_at_least_one_key("and", "or", "not")
+            )
         )
     return current_schema
 
@@ -44,6 +49,7 @@ FINAL_CONDITION_VALIDATOR = vol.Any(
 
 BS_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
     vol.Required("sensors"): vol.All(cv.ensure_list, [{
+        vol.Optional("alias"): cv.string,
         vol.Required("name"): cv.string,
         vol.Optional("unique_id"): cv.string,
         vol.Optional("icon", default="mdi:shield-check"): cv.icon,
@@ -53,6 +59,7 @@ BS_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
             [vol.All(
                 {
                     vol.Required("target"): cv.TARGET_SERVICE_FIELDS,
+                    vol.Optional("alias"): cv.string,
                     vol.Required("condition"): FINAL_CONDITION_VALIDATOR,
                     vol.Optional("allow_unavailable", default=False): cv.boolean,
                     vol.Optional("allow_unknown", default=False): cv.boolean,

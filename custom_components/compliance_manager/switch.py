@@ -42,7 +42,7 @@ async def async_setup_platform(
     cmp_mgr_cfg = config
     test_mode = cmp_mgr_cfg.get("test_mode", False)
     num_groups = cmp_mgr_cfg.get("test_groups_to_create", 0)
-    _LOGGER.warning(f"PODDD [switch] {cmp_mgr_cfg=}")
+
     """Set up the lab switches."""
     if not test_mode or num_groups == 0:
         return
@@ -56,7 +56,7 @@ async def async_setup_platform(
         unkn_id = f"{LAB_PREFIX}{i}_unkn"
         main_id = f"{LAB_PREFIX}{i}"
 
-        _LOGGER.warning(f"PODDD [switch] Forcing creation of group {i}")
+
 
         # We append all entities. HA will handle the merging based on unique_id.
         entities.append(ModifierSwitch(unav_id, f"Force Unav (G{i})"))
@@ -66,7 +66,6 @@ async def async_setup_platform(
         entities.append(LabSwitch(i, f"switch.{unav_id}", f"switch.{unkn_id}"))
 
     if entities:
-        _LOGGER.warning(f"PODDD [switch] Registering {len(entities)} test lab entities")
         async_add_entities(entities)
 
 class ModifierSwitch(SwitchEntity, RestoreEntity):
