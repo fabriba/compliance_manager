@@ -116,6 +116,57 @@ views:
                       service_data:
                         entity_id: binary_sensor.lab_test_output_01
                         duration: '00:00:05'
+
+          - type: markdown
+            content: >
+              - **status:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','status')}} 
+
+              - **active_count:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','active_count')}}
+
+
+              - **Severity:** {{ state_attr('binary_sensor.lab_test_output_01',
+
+              'severity') }} 
+
+              - **severity_label:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','severity_label')}} 
+
+              - **grace_periods:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','grace_periods')}}
+
+
+              - **snooze_registry:** {{
+
+              state_attr('binary_sensor.lab_test_output_01', 'snooze_registry')
+
+              }}
+
+
+              - **Active Violations:** {{   
+
+              state_attr('binary_sensor.lab_test_output_01', 'active_count') }}
+
+              - **violations_registry:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','violations_registry')}}
+
+              - **tracked_entities:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','tracked_entities')}}
+
+              - **active_violations_debug_info:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','active_violations_debug_info')}}
+
+              - **write_operations:** {{
+
+              state_attr('binary_sensor.lab_test_output_01','write_operations')}}
           - type: markdown
             content: '### Test 02: Expected OFF (Grace Period 10s; Severity Warning)'
           - type: horizontal-stack
@@ -338,7 +389,8 @@ views:
                         duration: '00:00:05'
           - type: markdown
             content: >-
-              ### Test 04: Exp On/Off - 2 targets (a/b grace 5min + c/d grace 5sec); Sev=Critical - use for testing reboot persistence
+              ### Test 04: Exp On/Off - 2 targets (a/b grace 5min + c/d grace
+              5sec); Sev=Critical - use for testing reboot persistence
           - type: horizontal-stack
             cards:
               - type: vertical-stack
