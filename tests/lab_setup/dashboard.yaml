@@ -23,6 +23,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_1_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_01
+                            entities: switch.compliance_manager_lab_tester_1
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -36,6 +46,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_2_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_01
+                            entities: switch.compliance_manager_lab_tester_2
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -49,6 +69,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_3_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_01
+                            entities: switch.compliance_manager_lab_tester_3
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -62,9 +92,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_4_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_01
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_01
+                            entities: switch.compliance_manager_lab_tester_4
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_01
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_01
+                        duration: '00:00:05'
           - type: markdown
             content: '### Test 02: Expected OFF (Grace Period 10s; Severity Warning)'
           - type: horizontal-stack
@@ -82,6 +133,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_5_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_02
+                            entities: switch.compliance_manager_lab_tester_5
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -95,6 +156,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_6_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_02
+                            entities: switch.compliance_manager_lab_tester_6
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -108,6 +179,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_7_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_02
+                            entities: switch.compliance_manager_lab_tester_7
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -121,9 +202,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_8_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_02
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_02
+                            entities: switch.compliance_manager_lab_tester_8
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_02
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_02
+                        duration: '00:00:05'
           - type: markdown
             content: '### Test 03: Logic AND (Expected ON + Template Always True)'
           - type: horizontal-stack
@@ -141,6 +243,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_9_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_03
+                            entities: switch.compliance_manager_lab_tester_9
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -154,6 +266,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_10_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_03
+                            entities: switch.compliance_manager_lab_tester_10
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -167,6 +289,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_11_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_03
+                            entities: switch.compliance_manager_lab_tester_11
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -180,11 +312,34 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_12_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_03
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_03
+                            entities: switch.compliance_manager_lab_tester_12
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_03
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_03
+                        duration: '00:00:05'
           - type: markdown
-            content: '### Test 04: Exp On/Off, Grace 5min (switch a/b) or 5 sec( c/d)'
+            content: >-
+              ### Test 04: Logic OR (Expected On or Off) - Grace 5min (use to
+              test reboot persistence); Sev=Critical
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -200,6 +355,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_13_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_04
+                            entities: switch.compliance_manager_lab_tester_13
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -213,6 +378,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_14_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_04
+                            entities: switch.compliance_manager_lab_tester_14
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -226,6 +401,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_15_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_04
+                            entities: switch.compliance_manager_lab_tester_15
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -239,9 +424,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_16_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_04
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_04
+                            entities: switch.compliance_manager_lab_tester_16
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_04
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_04
+                        duration: '00:00:05'
           - type: markdown
             content: >-
               ### Test 05: Logic NOT (Expected Not Off) (allow* are left default
@@ -261,6 +467,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_17_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_05
+                            entities: switch.compliance_manager_lab_tester_17
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -274,6 +490,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_18_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_05
+                            entities: switch.compliance_manager_lab_tester_18
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -287,6 +513,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_19_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_05
+                            entities: switch.compliance_manager_lab_tester_19
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -300,9 +536,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_20_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_05
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_05
+                            entities: switch.compliance_manager_lab_tester_20
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_05
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_05
+                        duration: '00:00:05'
           - type: markdown
             content: '### Test 06: Allow Unavailable, Expected On ; Sev = 40 '
           - type: horizontal-stack
@@ -320,6 +577,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_21_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_06
+                            entities: switch.compliance_manager_lab_tester_21
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -333,6 +600,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_22_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_06
+                            entities: switch.compliance_manager_lab_tester_22
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -346,6 +623,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_23_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_06
+                            entities: switch.compliance_manager_lab_tester_23
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -359,9 +646,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_24_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_06
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_06
+                            entities: switch.compliance_manager_lab_tester_24
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_06
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_06
+                        duration: '00:00:05'
           - type: markdown
             content: '### Test 07: Expected On; Group Grace (20s)'
           - type: horizontal-stack
@@ -379,6 +687,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_25_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_25
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -392,6 +710,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_26_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_26
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -405,6 +733,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_27_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_27
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -418,9 +756,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_28_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_07
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_28
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_07
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_07
+                        duration: '00:00:05'
           - type: markdown
             content: '### Test 08: Value Template { states(target_entity) == "on" }'
           - type: horizontal-stack
@@ -438,6 +797,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_29_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_29
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -451,6 +820,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_30_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_30
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -464,6 +843,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_31_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_31
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -477,9 +866,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_32_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_08
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_07
+                            entities: switch.compliance_manager_lab_tester_32
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_08
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_08
+                        duration: '00:00:05'
           - type: markdown
             content: '### Test 09: Allow Unknown, Expected On'
           - type: horizontal-stack
@@ -497,6 +907,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_33_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_08
+                            entities: switch.compliance_manager_lab_tester_33
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -510,6 +930,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_34_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_08
+                            entities: switch.compliance_manager_lab_tester_34
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -523,6 +953,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_35_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_08
+                            entities: switch.compliance_manager_lab_tester_35
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -536,9 +976,30 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_36_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_09
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_08
+                            entities: switch.compliance_manager_lab_tester_36
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_09
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_09
+                        duration: '00:00:05'
           - type: markdown
             content: >-
               ### Test 10: Logic AND-NOT (Expected on and not off); composite
@@ -558,6 +1019,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_37_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_09
+                            entities: switch.compliance_manager_lab_tester_37
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -571,6 +1042,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_38_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_09
+                            entities: switch.compliance_manager_lab_tester_38
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -584,6 +1065,16 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_39_unkn
                         name: unkn
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_09
+                            entities: switch.compliance_manager_lab_tester_39
+                            duration: '00:00:05'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -597,6 +1088,27 @@ views:
                       - type: button
                         entity: switch.compliance_manager_lab_tester_40_unkn
                         name: unkn
-              - type: entity
-                entity: binary_sensor.lab_test_output_10
-                name: Result
+                      - type: button
+                        name: Snooze
+                        icon: mdi:bell-off
+                        tap_action:
+                          action: call-service
+                          service: compliance_manager.snooze
+                          service_data:
+                            entity_id: binary_sensor.lab_test_output_09
+                            entities: switch.compliance_manager_lab_tester_40
+                            duration: '00:00:05'
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: binary_sensor.lab_test_output_10
+                    name: Result
+                  - type: button
+                    name: Snooze
+                    icon: mdi:bell-off
+                    tap_action:
+                      action: call-service
+                      service: compliance_manager.snooze
+                      service_data:
+                        entity_id: binary_sensor.lab_test_output_10
+                        duration: '00:00:05'
