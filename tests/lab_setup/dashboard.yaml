@@ -338,8 +338,7 @@ views:
                         duration: '00:00:05'
           - type: markdown
             content: >-
-              ### Test 04: Logic OR (Expected On or Off) - Grace 5min (use to
-              test reboot persistence); Sev=Critical
+              ### Test 04: Exp On/Off - 2 targets (a/b grace 5min + c/d grace 5sec); Sev=Critical - use for testing reboot persistence
           - type: horizontal-stack
             cards:
               - type: vertical-stack

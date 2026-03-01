@@ -21,7 +21,7 @@ class ComplianceManagerAttributes:
     SNOOZE_REGISTRY = "snooze_registry"
 
     # Debug/Detailed Attributes
-    VIOLATION_REGISTRY = "violations_registryr"  # Replaces failing_reg
+    VIOLATION_REGISTRY = "violations_registry"  # Replaces failing_reg
     TRACKED_ENTITIES = "tracked_entities"
     VIOLATIONS_DEBUG = "active_violations_debug_info"
     WRITE_OPS = "write_operations"
