@@ -72,7 +72,7 @@ async def async_setup_platform(
         """
         # This service now finds entities currently registered in HA
         target_entities = call.data.get("entity_id", [])
-        entities_to_snooze = call.data.get("entities", [])
+        entities_to_snooze = call.data.get("sub_entities", [])
         duration = call.data.get("duration")
 
         for entity in entities:
@@ -86,7 +86,7 @@ async def async_setup_platform(
         handle_snooze,
         schema=vol.Schema({
             vol.Required("entity_id"): cv.entity_ids,
-            vol.Optional("entities"): cv.ensure_list,
+            vol.Optional("sub_entities"): cv.ensure_list,
             vol.Required("duration"): cv.time_period,
         })
     )
@@ -111,12 +111,8 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._rules = s_conf.get("rules", [])
         self._flattened_rules = [] #  performance-optimized version
         self._tracked_entities: set[str] = set()
-        #Todo: remove all references  to self._snooze_registry:v1, _violations_registry_v1 and active_violations_v1
-        #self._snooze_registry_v1: dict[str, str] = {} # {entity_id: expiry_iso_string}
-        #self._violations_registry_v1: dict[str, str] = {} # {grace_target: first_fail_iso_string}
-        #self._timer_unsubs: dict[str, callable] = {}
-        self._snooze_registry_v2: dict[str, RegistryEntry] = {}
-        self._violations_registry_v2: dict[str, RegistryEntry] = {}
+        self._snooze_registry: dict[str, RegistryEntry] = {}
+        self._violations_registry: dict[str, RegistryEntry] = {}
         self._write_count = 0
         self._config = s_conf
 
@@ -133,7 +129,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
             entities = self._attr_extra_state_attributes.get("active_violations", [])
 
         for eid in entities:
-            self._snooze_registry_v2[eid] = self._create_timer(eid, expiry)
+            self._snooze_registry[eid] = self._create_timer(eid, expiry)
 
 
         await self._evaluate_compliance()
@@ -152,18 +148,14 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         if last_state:
             if ATTRIBUTES.SNOOZE_REGISTRY in last_state.attributes:
                 _s = last_state.attributes.get(ATTRIBUTES.SNOOZE_REGISTRY) or {}
-                #self._snooze_registry_v1 = dict(saved_snoozes)
-                # ToDo: _snooze_registry_v1 replaced by v2
-                self._snooze_registry_v2 = {
+                self._snooze_registry = {
                     eid: self._restore_timer(eid, iso_str)
                     for eid, iso_str in _s.items()
                 }
 
             if ATTRIBUTES.VIOLATION_REGISTRY in last_state.attributes:
                 _d = last_state.attributes.get(ATTRIBUTES.VIOLATION_REGISTRY) or {}
-                # TODO: remove _violations_registry_v1
-                #self._violations_registry_v1 = _d
-                self._violations_registry_v2 = {
+                self._violations_registry = {
                     eid: self._restore_timer(eid, iso_str)
                     for eid, iso_str in _d.items()
                 }
@@ -252,8 +244,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         binary state and attributes (severity, violation list).
         """
         noncompliant_rules = []
-        # active_violations_v1 = []
-        active_violations_v2 = []
+        active_violations = []
         max_severity = {"level": 99, "label": "SeverityEvaluationFail"}
         self._write_count += 1
 
@@ -275,18 +266,18 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
 
             all_grace_targets.add(grace_target)
 
-            if grace_target not in self._violations_registry_v2:
+            if grace_target not in self._violations_registry:
                 expiry = dt_util.now() + grace_delta
-                self._violations_registry_v2[grace_target] = self._create_timer(grace_target, expiry)
+                self._violations_registry[grace_target] = self._create_timer(grace_target, expiry)
 
-            if timer_snooze := self._snooze_registry_v2.get(rule_target):
+            if timer_snooze := self._snooze_registry.get(rule_target):
                 if not timer_snooze.is_expired:
                     continue  # if we are here, snooze active >> skip violation evaluation
 
-            timer_grace = self._violations_registry_v2[grace_target]
+            timer_grace = self._violations_registry[grace_target]
             if timer_grace.is_expired:
                 current_sev = self._get_severity_data(rule_sev_raw)
-                active_violations_v2.append({
+                active_violations.append({
                     'entity_id': rule_target,
                     'severity': current_sev['level'],
                     'severity_label': current_sev['label']
@@ -294,38 +285,37 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 if current_sev["level"] < max_severity["level"]:
                     max_severity = current_sev
 
-        active_violations_eids = [v["entity_id"] for v in active_violations_v2]
+        active_violations_eids = [v["entity_id"] for v in active_violations]
 
-        for grace_target in list(self._violations_registry_v2.keys()):
+        for grace_target in list(self._violations_registry.keys()):
             if grace_target not in all_grace_targets:
                 # if we are here, grace expired >> pop will trigger RegistryEntry.__del__
-                self._violations_registry_v2.pop(grace_target)
-        for snooze_target in list(self._snooze_registry_v2.keys()):
-            if self._snooze_registry_v2[snooze_target].is_expired:
-                self._snooze_registry_v2.pop(snooze_target)
+                self._violations_registry.pop(grace_target)
+        for snooze_target in list(self._snooze_registry.keys()):
+            if self._snooze_registry[snooze_target].is_expired:
+                self._snooze_registry.pop(snooze_target)
 
         grace_period_display = list({str(rule["grace_period"]) for rule in self._rules if "grace_period" in rule})
-        self._attr_is_on = len(active_violations_v2) > 0
+        self._attr_is_on = len(active_violations) > 0
         attrs = {
             ATTRIBUTES.SEVERITY: max_severity["level"] if self._attr_is_on else "",
             ATTRIBUTES.SEVERITY_LABEL: max_severity["label"] if self._attr_is_on else "",
             ATTRIBUTES.GRACE_PERIODS: grace_period_display,
             ATTRIBUTES.ACTIVE_VIOLATIONS: active_violations_eids,
-            ATTRIBUTES.ACTIVE_COUNT: len(active_violations_v2),
+            ATTRIBUTES.ACTIVE_COUNT: len(active_violations),
             ATTRIBUTES.SNOOZE_REGISTRY: {
                 eid: entry.expiry_iso
-                for eid, entry in self._snooze_registry_v2.items()
+                for eid, entry in self._snooze_registry.items()
             },
         }
         if self._config.get("show_debug_attributes", False):
             attrs.update({
-                # ATTRIBUTES.VIOLATION_REGISTRY: self._violations_registry_v1,
-                ATTRIBUTES.VIOLATION_REGISTRY + "_v2": {
+                ATTRIBUTES.VIOLATION_REGISTRY: {
                     target: entry.expiry_iso
-                    for target, entry in self._violations_registry_v2.items()
+                    for target, entry in self._violations_registry.items()
                 },
                 ATTRIBUTES.TRACKED_ENTITIES: self._tracked_entities,
-                ATTRIBUTES.VIOLATIONS_DEBUG: active_violations_v2,
+                ATTRIBUTES.VIOLATIONS_DEBUG: active_violations,
                 ATTRIBUTES.STATUS: "Non-Compliant" if self._attr_is_on else "Compliant",
                 ATTRIBUTES.WRITE_OPS: self._write_count
             })
