@@ -31,6 +31,7 @@ from .const import (
     DEFAULT_SEVERITY,
     DOMAIN,
     SEVERITY_LEVELS,
+    ON_EQUIVALENT_STATES,
     ComplianceManagerAttributes as ATTRIBUTES,
 )
 from .schema import BS_PLATFORM_SCHEMA as PLATFORM_SCHEMA
@@ -60,36 +61,11 @@ async def async_setup_platform(
         s_conf["show_debug_attributes"] = cmp_mgr_cfg.get("show_debug_attributes", False)
         entities.append(ComplianceManagerSensor(s_conf))
 
+    # pass the necessary info to services (snooze in particular, in services.py)
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN]["binary_sensor_instances"] = entities
 
     async_add_entities(entities)
-
-    # REGISTER SERVICE AFTER ADDING ENTITIES
-    async def handle_snooze(call):
-        """    Service handler for silencing specific compliance violations.
-        It parses the targeted sensor and sub-entities from the service call
-        data and applies a snooze duration to the matching sensor instances
-        registered in the system.
-        """
-        # This service now finds entities currently registered in HA
-        target_entities = call.data.get("entity_id", [])
-        entities_to_snooze = call.data.get("sub_entities", [])
-        duration = call.data.get("duration")
-
-        for entity in entities:
-            # Check if this specific instance matches the targeted entity_id
-            if entity.entity_id in target_entities:
-                await entity.async_snooze(entities_to_snooze, duration)
-
-    hass.services.async_register(
-        DOMAIN,
-        "snooze",
-        handle_snooze,
-        schema=vol.Schema({
-            vol.Required("entity_id"): cv.entity_ids,
-            vol.Optional("sub_entities"): cv.ensure_list,
-            vol.Required("duration"): cv.time_period,
-        })
-    )
 
 
 ###############  ComplianceManagerSensor ###############
@@ -254,7 +230,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 rule["grace_target"] = f"{self._attr_name}___rule_{idx}" if rule.get("group_grace") else rule_target
 
             state_obj = self.hass.states.get(rule_target)
-            if self._check_rule_violation(rule, state_obj):
+            if not self._is_rule_compliant(rule, state_obj):
                 noncompliant_rules.append(rule)
 
         all_grace_targets = set()
@@ -339,25 +315,25 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 if key in condition:
                     self._setup_condition_templates(condition[key])
 
-    def _check_rule_violation(self, rule: dict, state_obj: State | None) -> bool:
+    def _is_rule_compliant(self, rule: dict, state_obj: State | None) -> bool:
         """        Evaluates a single rule against an entity's state object.
         Handles special states like 'unavailable' and 'unknown' based
         on the rule configuration before passing the entity to the
         recursive logic evaluation block.
         """
         if state_obj is None:
-            return True
+            return False
 
         if state_obj.state == "unavailable":
-            return not rule.get("allow_unavailable", False)
+            return  rule.get("allow_unavailable", False)
         if state_obj.state == "unknown":
-            return not rule.get("allow_unknown", False)
+            return  rule.get("allow_unknown", False)
 
         # We start the evaluation. Since rule["condition"] is a list,
         # it's an implicit AND.
-        return self._evaluate_logic_block({"and": rule["condition"]}, state_obj)
+        return self._is_metacondition_compliant({"and": rule["condition"]}, state_obj)
 
-    def _evaluate_logic_block(self, item: dict | list, state_obj: State) -> bool:
+    def _is_metacondition_compliant(self, item: dict | list, state_obj: State) -> bool:
         """        Handles recursive logic operators (AND, OR, NOT).
         Orchestrates complex rule trees by evaluating nested logic
         blocks and calling atomic condition checks for individual
@@ -365,18 +341,22 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         """
         # Handle lists (implicit AND)
         if isinstance(item, list):
-            return any(self._evaluate_logic_block(i, state_obj) for i in item)
+            return all(self._is_metacondition_compliant(i, state_obj) for i in item)
         # Logic Operators
-        if "and" in item:
-            return any(self._evaluate_logic_block(i, state_obj) for i in item["and"])
-        if "or" in item:
-            return all(self._evaluate_logic_block(i, state_obj) for i in item["or"])
+        if "and" in item: # violation if ALL sub-condition are violations
+            return all(self._is_metacondition_compliant(i, state_obj) for i in item["and"])
+        if "or" in item: # compliant if ANY sub-condition are compliant
+            return any(self._is_metacondition_compliant(i, state_obj) for i in item["or"])
         if "not" in item:
-            return not self._evaluate_logic_block(item["not"], state_obj)
+            not_clause = item["not"]
+            if isinstance(not_clause, list):
+                return not all(self._is_metacondition_compliant(i, state_obj) for i in not_clause)
+            else:
+                return not self._is_metacondition_compliant(not_clause, state_obj)
         # If it's not a logic operator, it MUST be an atomic condition
-        return self._check_condition_violation(item, state_obj)
+        return self._is_condition_compliant(item, state_obj)
 
-    def _check_condition_violation(self, condition: dict, state_obj: State) -> bool:
+    def _is_condition_compliant(self, condition: dict, state_obj: State) -> bool:
         """        Performs an atomic evaluation of a specific condition.
         Compares the target state or attribute against expected
         numeric ranges, specific states, or rendered templates to
@@ -389,7 +369,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
 
         # Handle case where attribute is missing
         if target_attr and target_attr not in state_obj.attributes:
-            return True
+            return False
 
         # A. Value Template
         if "value_template" in condition:
@@ -400,9 +380,9 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                                "t_id": state_obj.entity_id },
                     parse_result=True
                 )
-                return not res
+                return  res
             except Exception:
-                return True
+                return False
 
         # B. Expected Numeric
         if "expected_numeric" in condition:
@@ -410,22 +390,22 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 val = float(val_to_check)
                 limits = condition["expected_numeric"]
                 if "min" in limits and val < limits["min"]:
-                    return True
+                    return False
                 if "max" in limits and val > limits["max"]:
-                    return True
-                return False
-            except (ValueError, TypeError):
+                    return False
                 return True
+            except (ValueError, TypeError):
+                return False
 
         # C. Expected State
         if "expected_state" in condition:
             expected = condition["expected_state"]
             if isinstance(expected, bool):
-                actual_bool = str(val_to_check).lower() in ["on", "true", "home", "open", "connected", "1", "yes"]
-                return actual_bool != expected
-            return str(val_to_check).lower() != str(expected).lower()
+                actual_bool = str(val_to_check).lower() in ON_EQUIVALENT_STATES
+                return actual_bool == expected
+            return str(val_to_check).lower() == str(expected).lower()
 
-        return False
+        return True
 
     def _get_severity_data(self, sev_cfg):
         """        Helper to normalize severity configuration data.

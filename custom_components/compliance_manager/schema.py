@@ -23,28 +23,39 @@ CONDITION_SCHEMA = vol.All(
 )
 
 # 2. Define Logic Block - UPDATED to be recursive
-def get_recursive_schema(depth=5):
-    """ Limits recursion to 5 to avoid infinite recursion ."""
-    current_schema = CONDITION_SCHEMA
-    for _ in range(depth):
-        current_schema = vol.Any(
-            CONDITION_SCHEMA,
-            vol.All(
-                vol.Schema({
-                    vol.Optional("alias"): cv.string,
-                    vol.Optional("and"): vol.All(cv.ensure_list, [current_schema]),
-                    vol.Optional("or"): vol.All(cv.ensure_list, [current_schema]),
-                    vol.Optional("not"): current_schema,
-                }),
-                cv.has_at_least_one_key("and", "or", "not")
-            )
-        )
-    return current_schema
+def _get_recursive_condition_schema(depth=5):
+    """Return a recursive condition item schema limited to `depth`."""
+    if depth <= 0:
+        # at leaf only allow atomic conditions
+        return CONDITION_SCHEMA
 
-# 3. Update the Final Validator
+    # placeholder for recursion
+    def make_child_schema(d):
+        return vol.Any(CONDITION_SCHEMA, _logical_mapping_schema(d))
+
+    def _logical_mapping_schema(d):
+        # each operator must map to a list of condition items (recursing with depth-1)
+        child_item = _get_recursive_condition_schema(d - 1)
+        return vol.All(
+            {
+                vol.Optional("alias"): cv.string,
+                vol.Optional("and"): vol.All(cv.ensure_list, [child_item]),
+                vol.Optional("or"): vol.All(cv.ensure_list, [child_item]),
+                # 'not' can be a single child or a list of children; normalize to list
+                vol.Optional("not"): vol.Any(child_item, vol.All(cv.ensure_list, [child_item])),
+            },
+            cv.has_at_least_one_key("and", "or", "not")
+        )
+
+    return vol.Any(CONDITION_SCHEMA, _logical_mapping_schema(depth))
+
+
+# Final validator accepts either:
+#  - a single condition item (mapping-style), or
+#  - a sequence (list) of condition items (sequence-style)
 FINAL_CONDITION_VALIDATOR = vol.Any(
-    get_recursive_schema(5),
-    vol.All(cv.ensure_list, [get_recursive_schema(5)])
+    _get_recursive_condition_schema(6),
+    vol.All(cv.ensure_list, [_get_recursive_condition_schema(6)])
 )
 
 BS_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({

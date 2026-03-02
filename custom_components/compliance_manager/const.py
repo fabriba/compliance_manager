@@ -6,8 +6,7 @@ LAB_PREFIX = "compliance_manager_lab_tester_"
 # Integration Domain
 DOMAIN = "compliance_manager"  # Change this to your actual folder name
 PLATFORMS = ["binary_sensor", "switch"]
-
-from typing import Final
+ON_EQUIVALENT_STATES = [ "on", "true", "home", "open", "connected", "1", "yes", "problem", "unsafe", "detected", "active" ]
 
 
 class ComplianceManagerAttributes:
