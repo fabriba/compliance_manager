@@ -13,36 +13,62 @@ binary_sensor:
   - platform: compliance_manager
     show_debug_attributes: true
     sensors:
-      # Test 1: Semplice stato ON
+# Test 01: AND/OR/NOT Test; Expoff (switches) OR is problem, but with <= 2 violations (lab_test_output_02)
       - name: "Lab Test Output 01"
+        alias: "Lab Test Output 01: Comprehensive Logic Check"
         unique_id: cm_lab_test_01
         rules:
-          - target:
+          - alias: "Main Rule: Comprehensive Logic Check"
+            target:
               entity_id:
                 - switch.compliance_manager_lab_tester_1
                 - switch.compliance_manager_lab_tester_2
                 - switch.compliance_manager_lab_tester_3
                 - switch.compliance_manager_lab_tester_4
+                - binary_sensor.lab_test_output_02
             condition:
-              expected_state: "on"
+              - alias: "Is compliant if: OPT.A) either is a switch off, or is a binary_sensor with active_count <= 2"
+                or:
+                - alias:   "Ok if switch is off (switch does not have active_count attrib)"
+                  value_template: >
+                                  {{  is_state(t_id, 'off')  and
+                                      is_state(t_entity.entity_id,  'off') and
+                                      t_state == 'off'  and
+                                     ( states(t_id) is not none and 'active_count' not in states[t_id].attributes ) 
+                                   }}
+                - alias: "ok if binary_sensor with active_count == 1 or  2 "
+                  and:
+                  - not:
+                    - alias: "Check Target State"
+                      expected_state: "off"
+                  - alias: "Check Self-Active Count"
+                    attribute: "active_count"
+                    expected_numeric:
+                      min: 0
+                      max: 2
+                
 
-      # Test 2: Stato OFF con Grace Period
+      # Test 02: Stato OFF con Grace Period
       - name: "Lab Test Output 02"
+        alias: "# Test 02: Exp OFF with 3sec Grace Period (entity 1  only used if added to label_test_02 and entity 2 if added to areas-kitchen"
         unique_id: cm_lab_test_02
         rules:
           - target:
+              label_id:
+                label_test_02 #- switch.compliance_manager_lab_tester_5
+              area_id:
+                areas-kitchen #- switch.compliance_manager_lab_tester_6
               entity_id:
-                - switch.compliance_manager_lab_tester_5
-                - switch.compliance_manager_lab_tester_6
                 - switch.compliance_manager_lab_tester_7
                 - switch.compliance_manager_lab_tester_8
             condition:
               expected_state: "off"
-            grace_period: "00:00:10"
+            grace_period: "00:00:03"
             severity: warning
 
-      # Test 3: Logica AND
+      # Test 3: Logica hardcoded
       - name: "Lab Test Output 03"
+        alias: "# Test 03: on ONLY if switch1 2 qnd 3 are On but switch4 Off (switch4 hardcoded)"
         unique_id: cm_lab_test_03
         rules:
           - target:
@@ -52,19 +78,20 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_11
                 - switch.compliance_manager_lab_tester_12
             condition:
-              and:
-                - expected_state: "on"
-                - value_template: "{{ 1 == 1 }}"
+              value_template: >
+                {% set hardcoded_sensor = 'switch.compliance_manager_lab_tester_12' %}
+                {% set off_reference = is_state(hardcoded_sensor, 'off') %}
+                {% set is_on =  is_state(t_id, 'on')  or t_id == hardcoded_sensor  %}
+                {{ is_on and is_state('switch.compliance_manager_lab_tester_12', 'off') }}
 
       # Test 4: Logica OR con severità critica
-      - alias: "Lab Test Output 04: Exp On/Off, Grace 5min (switch a/b) or 5 sec( c/d)"
+      - alias: "est 04: Reboot Persistence: Exp On/Off, Grace 5min (1st switch) or 5 sec, add a 5min snooze to test that too"
         name: "Lab Test Output 04"
         unique_id: cm_lab_test_04
         rules:
           - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_13
-                - switch.compliance_manager_lab_tester_14
             condition:
               or:
                 - expected_state: "on"
@@ -74,6 +101,7 @@ binary_sensor:
             severity: "critical"
           - target:
               entity_id:
+                - switch.compliance_manager_lab_tester_14
                 - switch.compliance_manager_lab_tester_15
                 - switch.compliance_manager_lab_tester_16
             condition:

@@ -7,7 +7,7 @@ views:
       - type: vertical-stack
         cards:
           - type: markdown
-            content: '### Test 01: Expected ON (Simple State check)'
+            content: '### Test 01: AND/OR/NOT Test; Expoff (switches) OR is problem, but with <= 2 violations (lab_test_output_02)
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -125,7 +125,7 @@ views:
               - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_01','tracked_entities') }}
               - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_01','active_violations_debug_info') }}
           - type: markdown
-            content: '### Test 02: Expected OFF (Grace Period 10s; Severity Warning)'
+            content: '### Test 02: Exp OFF with 3sec Grace Period (entity 1  only used if added to label_test_02 and entity 2 if added to areas-kitchen'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -243,7 +243,7 @@ views:
               - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_02','tracked_entities') }}
               - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_02','active_violations_debug_info') }}
           - type: markdown
-            content: '### Test 03: Logic AND (Expected ON + Template Always True)'
+            content: '### Test 03: on ONLY if switch1 2 qnd 3 are On but switch4 Off (switch4 hardcoded)'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -362,8 +362,7 @@ views:
               - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_03','active_violations_debug_info') }}
           - type: markdown
             content: >-
-              ### Test 04: Exp On/Off - 2 targets (a/b grace 5min + c/d grace
-              5sec); Sev=Critical - use for testing reboot persistence
+              ### Test 04: Reboot Persistence: Exp On/Off, Grace 5min (1st switch) or 5 sec, add a 5min snooze to test that too
           - type: horizontal-stack
             cards:
               - type: vertical-stack
