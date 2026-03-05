@@ -70,9 +70,9 @@ binary_sensor:
             grace_period: "00:00:03"
             severity: warning
 
-      # Test 3: Logica hardcoded
+      # Test 3: Test 03: switch a/b/c/d Exp Off/NotOff/Off/NotOff (recursive logic)
       - name: "Lab Test Output 03"
-        alias: "# Test 03: on ONLY if switch1 1 on and 2  not on qnd 3 on and switch4 not on, nested structure"
+        alias: "# Test 03: switch a/b/c/d Exp Off/NotOff/Off/NotOff (recursive logic)
         unique_id: cm_lab_test_03
         compliance:
           - target:
