@@ -11,10 +11,16 @@ _LOGGER = logging.getLogger(__name__)
 # this is directly loaded in __init__ because it's a standard service and we don't define it here.
 
 async def async_register_services(hass: HomeAssistant):
-    """Registra tutti i servizi dell'integrazione."""
+    """
+    Main service handler for the 'snooze' functionality.
+    It extracts target entity IDs and duration from the service call data,
+    identifies the corresponding ComplianceManagerSensor instances,
+    and triggers the snooze logic. If no specific entity is provided,
+    it automatically snoozes all active violations for the target sensors.
+    """
 
     async def handle_snooze(call: ServiceCall):
-        """Service handler per il silenziamento (snooze)."""
+        """Service handler for silencing (snooze)"""
         target_ids = call.data.get("entity_id", [])
         sub_entities = call.data.get("sub_entities", [])
         duration = call.data.get("duration")
@@ -35,7 +41,7 @@ async def async_register_services(hass: HomeAssistant):
             if entry.platform == DOMAIN and "lab_test_" in entry.entity_id
         ]
         for entity_id in entities_to_remove:
-            _LOGGER.info("Rimozione entità lab: %s", entity_id)
+            _LOGGER.info("Removing entity lab: %s", entity_id)
             ent_reg.async_remove(entity_id)
 
     # Actually register the service to ha

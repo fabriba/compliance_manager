@@ -7,7 +7,7 @@ LAB_PREFIX = "compliance_manager_lab_tester_"
 DOMAIN = "compliance_manager"  # Change this to your actual folder name
 PLATFORMS = ["binary_sensor", "switch"]
 ON_EQUIVALENT_STATES = [ "on", "true", "home", "open", "connected", "1", "yes", "problem", "unsafe", "detected", "active" ]
-
+MAX_LOGIC_CONTITIONS_DEPTH = 5
 
 class ComplianceManagerAttributes:
     """Constants for ComplianceManager Attributes."""

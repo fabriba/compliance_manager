@@ -1,8 +1,11 @@
+from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Callable, Any
-from datetime import datetime
 import homeassistant.util.dt as dt_util
 from homeassistant.helpers.event import async_track_point_in_time
+from datetime import datetime
+
+
 
 @dataclass
 class RegistryEntry:
@@ -51,3 +54,24 @@ class RegistryEntry:
     def __del__(self):
         """Ensures the timer is cancelled when the object is removed from memory."""
         self.cancel()
+
+class ComplianceTimerMixin:
+    """Helper class to manage creation and restoration of timers."""
+
+    def _create_timer(self, eid: str, expiry: datetime) -> RegistryEntry:
+        """Creates a new timer with the standard entity callback."""
+        return RegistryEntry(
+            eid,
+            expiry,
+            self.hass,
+            self._update_event_handler
+        )
+
+    def _restore_timer(self, eid: str, iso_str: str) -> RegistryEntry:
+        """Restores a timer from an ISO string, used during state restoration."""
+        return RegistryEntry.create_from_iso(
+            eid,
+            iso_str,
+            self.hass,
+            self._update_event_handler
+        )

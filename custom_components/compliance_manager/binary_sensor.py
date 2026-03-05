@@ -3,10 +3,10 @@ from __future__ import annotations
 
 import logging
 import datetime
+import copy
 from datetime import timedelta
 from typing import Any
 
-import voluptuous as vol
 
 from homeassistant.components.binary_sensor import (
     BinarySensorDeviceClass,
@@ -18,7 +18,6 @@ from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import (
-    async_track_point_in_time,
     async_track_state_change_event,
 )
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -26,16 +25,13 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.util import dt as dt_util
 
 from .const import (
-    DEFAULT_GRACE,
     DEFAULT_ICON,
-    DEFAULT_SEVERITY,
     DOMAIN,
-    SEVERITY_LEVELS,
-    ON_EQUIVALENT_STATES,
     ComplianceManagerAttributes as ATTRIBUTES,
 )
-from .schema import BS_PLATFORM_SCHEMA as PLATFORM_SCHEMA
-from .timers import RegistryEntry
+from .schema import BINSENS_PLATFORM_SCHEMA  as PLATFORM_SCHEMA
+from .timers import RegistryEntry, ComplianceTimerMixin
+from .engine import ComplianceLogicMixin
 
 _LOGGER = logging.getLogger(__name__)
 _ = PLATFORM_SCHEMA # this only avoids "unused import warnings
@@ -69,7 +65,7 @@ async def async_setup_platform(
 
 
 ###############  ComplianceManagerSensor ###############
-class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
+class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity, ComplianceTimerMixin,ComplianceLogicMixin):
     """Compliance monitoring sensor."""
 
     _attr_should_poll = False
@@ -84,32 +80,12 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         self._attr_unique_id = s_conf.get("unique_id") or f"compliance_{self._attr_name.lower().replace(' ', '_')}"
         self._attr_icon = s_conf.get("icon", DEFAULT_ICON)
         self._attr_device_class = BinarySensorDeviceClass.PROBLEM
-        self._rules = s_conf.get("rules", [])
-        self._flattened_rules = [] #  performance-optimized version
-        self._tracked_entities: set[str] = set()
-        self._snooze_registry: dict[str, RegistryEntry] = {}
-        self._violations_registry: dict[str, RegistryEntry] = {}
-        self._write_count = 0
         self._config = s_conf
-
-    async def async_snooze(self, entities: list[str], duration: timedelta) -> None:
-        """        Applies a snooze period to specific sub-entities.
-        Calculates the expiry time and updates the snooze registry. If no
-        entities are specified, it automatically snoozes all currently
-        active violations for that sensor.
-        """
-        expiry = dt_util.now() + duration
-
-        # If no entities provided, snooze all currently active violations
-        if not entities:
-            entities = self._attr_extra_state_attributes.get("active_violations", [])
-
-        for eid in entities:
-            self._snooze_registry[eid] = self._create_timer(eid, expiry)
-
-
-        await self._evaluate_compliance()
-        self.async_write_ha_state()
+        self._optimized_compliance = []
+        self._cattr_tracked_entities: set[str] = set() # custom attr
+        self._cattr_snooze_registry: dict[str, RegistryEntry] = {}
+        self._cattr_violations_registry: dict[str, RegistryEntry] = {}
+        self._cattr_write_count = 0
 
     async def async_added_to_hass(self) -> None:
         """        Called when the sensor is added to Home Assistant.
@@ -124,14 +100,14 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         if last_state:
             if ATTRIBUTES.SNOOZE_REGISTRY in last_state.attributes:
                 _s = last_state.attributes.get(ATTRIBUTES.SNOOZE_REGISTRY) or {}
-                self._snooze_registry = {
+                self._cattr_snooze_registry = {
                     eid: self._restore_timer(eid, iso_str)
                     for eid, iso_str in _s.items()
                 }
 
             if ATTRIBUTES.VIOLATION_REGISTRY in last_state.attributes:
                 _d = last_state.attributes.get(ATTRIBUTES.VIOLATION_REGISTRY) or {}
-                self._violations_registry = {
+                self._cattr_violations_registry = {
                     eid: self._restore_timer(eid, iso_str)
                     for eid, iso_str in _d.items()
                 }
@@ -144,39 +120,40 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
               sets up Jinga2 templates for conditions, and subscribes to
               state change events for all relevant entities.
               """
-            #ent_reg = er.async_get(self.hass)
+            _LOGGER.debug("PODDD SETUP_START:  %s", self._attr_name)
+            optimized_compliance = []
+            for rule in  self._config.get("compliance", []):
+                # 1. Resolve Root Target
+                root_eids = self._get_entities_from_target(rule["target"])
+                self._cattr_tracked_entities.update(root_eids)
 
-            # 1. Flatten the rules once at startup
-            resolved_rules = []
-            for rule in self._rules:
-                # Resolve the target into a pure list of entity_ids
-                actual_eids = self._get_entities_from_target(rule["target"])
-                self._tracked_entities.update(actual_eids)
-                for eid in actual_eids:
-                    # Create a copy so we don't mess with the original config object
-                    new_rule = rule.copy()
-                    # REWRITE the target to be pure entity_ids only:
-                    new_rule["target"] = {"entity_id": eid }
-                    raw_cond = new_rule.get("condition")
-                    if not isinstance(raw_cond, list):
-                        new_rule["condition"] = [raw_cond]
+                for eid in root_eids:
+                    new_rule = self._safe_deepcopy_rule(rule)
+                    new_rule["target"] = {"entity_id": eid}
 
+                    # 1b. Process the list of conditions
+                    # Schema guarantees this is a list now
                     for cond_item in new_rule["condition"]:
-                        self._setup_condition_templates(cond_item)
+                        self._recursively_preprocess_rules(cond_item, new_rule)
 
+                    optimized_compliance.append(new_rule)
+                    _LOGGER.debug(
+                        "PODDD SETUP: Flattened Rule for %s. Condition IDs: %s",
+                        eid,
+                        [id(c) for c in new_rule["condition"]]
+                    )
 
-
-                    resolved_rules.append(new_rule)
-
-            # 2. Overwrite self._rules with the "flattened" version
-            self._flattened_rules = resolved_rules
+            # 2. Overwrite self._compliance with the recursively optimized version
+            self._optimized_compliance = optimized_compliance
+            _LOGGER.debug("PODDD FINAL_TRACKED_LIST: sensor %s listens to entity: %s", self._attr_name,
+                            list(self._cattr_tracked_entities))
 
             # 3. Standard event setup
-            if self._tracked_entities:
+            if self._cattr_tracked_entities:
                 self.async_on_remove(
                     async_track_state_change_event(
                         self.hass,
-                        list(self._tracked_entities),
+                        list(self._cattr_tracked_entities),
                         self._update_event_handler
                     )
                 )
@@ -204,218 +181,96 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
         # call the methos from the base class in the end
         await super().async_will_remove_from_hass()
 
-    async def _update_event_handler(self, _event):
-        """        Standard event handler for state changes.
-        Triggered whenever a tracked entity changes its state, prompting
-        a full re-evaluation of the compliance logic and a state
-        update in the Home Assistant UI.
+    async def async_snooze(self, entities: list[str], duration: timedelta) -> None:
+        """        Applies a snooze period to specific sub-entities.
+        Calculates the expiry time and updates the snooze registry. If no
+        entities are specified, it automatically snoozes all currently
+        active violations for that sensor.
         """
+        expiry = dt_util.now() + duration
+
+        # If no entities provided, snooze all currently active violations
+        if not entities:
+            entities = self._attr_extra_state_attributes.get("active_violations", [])
+
+        for eid in entities:
+            self._cattr_snooze_registry[eid] = self._create_timer(eid, expiry)
+
+
+        await self._evaluate_compliance()
+        self.async_write_ha_state()
+
+    async def _update_event_handler(self, _event):
+        """
+        Generic event dispatcher for state changes and timer triggers.
+        It processes incoming Home Assistant state change events for tracked
+        entities and handles expiration callbacks from grace period timers.
+        Updates the internal compliance logic and schedules a state write
+        operation for the binary sensor.
+        """
+
+        # If _event is a Home Assistant Event object
+        if hasattr(_event, "data"):
+            entity_id = _event.data.get('entity_id')
+            _LOGGER.debug("PODDD EVENT_RECEIVED: change of state for %s", entity_id)
+        # If _event is a datetime (timer callback)
+        elif isinstance(_event, datetime.datetime):
+            _LOGGER.debug("PODDD TIMER_EXPIRED:  Grace Period ended")
+        else:
+            _LOGGER.debug("PODDD UPDATE_TRIGGERED: generic update triggered")
+
         await self._evaluate_compliance()
         self.async_schedule_update_ha_state()
 
-    async def _evaluate_compliance(self) -> None:
-        """   CORE LOGIC engine for determining sensor state.
-        Iterates through rules, checks for active snoozes, evaluates
-        violations against grace periods, and updates the final
-        binary state and attributes (severity, violation list).
+
+    def _recursively_preprocess_rules(self, condition: Any, inherited_config: dict) -> None:
         """
-        noncompliant_rules = []
-        active_violations = []
-        max_severity = {"level": 99, "label": "SeverityEvaluationFail"}
-        self._write_count += 1
+        Recursively process and optimize the rule logic tree during initialization.
 
-        for idx, rule in enumerate(self._flattened_rules):  # can be replaced with self._rules
-            rule_target = rule["target"]["entity_id"]  # it's only one if using self._flattened_rules
-            if "grace_target" not in rule:
-                rule["grace_target"] = f"{self._attr_name}___rule_{idx}" if rule.get("group_grace") else rule_target
+        This method performs three critical pre-computation tasks:
+        1. Target Resolution: Converts high-level targets (area_id, label_id) into
+           static lists of entity_ids once to avoid registry lookups during runtime.
+        2. Configuration Inheritance: Propagates recursive keys (grace_period, severity,
+           etc.) from parent rules down to nested logical conditions.
+        3. Template Preparation: Injects the Home Assistant instance into Jinja2
+           templates to ensure they are ready for immediate rendering.
 
-            state_obj = self.hass.states.get(rule_target)
-            if not self._is_rule_compliant(rule, state_obj):
-                noncompliant_rules.append(rule)
-
-        all_grace_targets = set()
-        for rule in noncompliant_rules:
-            rule_target = rule["target"]["entity_id"]
-            grace_delta = rule.get("grace_period", DEFAULT_GRACE)
-            rule_sev_raw = rule.get("severity", DEFAULT_SEVERITY)
-            grace_target = rule["grace_target"]
-
-            all_grace_targets.add(grace_target)
-
-            if grace_target not in self._violations_registry:
-                expiry = dt_util.now() + grace_delta
-                self._violations_registry[grace_target] = self._create_timer(grace_target, expiry)
-
-            if timer_snooze := self._snooze_registry.get(rule_target):
-                if not timer_snooze.is_expired:
-                    continue  # if we are here, snooze active >> skip violation evaluation
-
-            timer_grace = self._violations_registry[grace_target]
-            if timer_grace.is_expired:
-                current_sev = self._get_severity_data(rule_sev_raw)
-                active_violations.append({
-                    'entity_id': rule_target,
-                    'severity': current_sev['level'],
-                    'severity_label': current_sev['label']
-                })
-                if current_sev["level"] < max_severity["level"]:
-                    max_severity = current_sev
-
-        active_violations_eids = [v["entity_id"] for v in active_violations]
-
-        for grace_target in list(self._violations_registry.keys()):
-            if grace_target not in all_grace_targets:
-                # if we are here, grace expired >> pop will trigger RegistryEntry.__del__
-                self._violations_registry.pop(grace_target)
-        for snooze_target in list(self._snooze_registry.keys()):
-            if self._snooze_registry[snooze_target].is_expired:
-                self._snooze_registry.pop(snooze_target)
-
-        grace_period_display = list({str(rule["grace_period"]) for rule in self._rules if "grace_period" in rule})
-        self._attr_is_on = len(active_violations) > 0
-        attrs = {
-            ATTRIBUTES.SEVERITY: max_severity["level"] if self._attr_is_on else "",
-            ATTRIBUTES.SEVERITY_LABEL: max_severity["label"] if self._attr_is_on else "",
-            ATTRIBUTES.GRACE_PERIODS: grace_period_display,
-            ATTRIBUTES.ACTIVE_VIOLATIONS: active_violations_eids,
-            ATTRIBUTES.ACTIVE_COUNT: len(active_violations),
-            ATTRIBUTES.SNOOZE_REGISTRY: {
-                eid: entry.expiry_iso
-                for eid, entry in self._snooze_registry.items()
-            },
-        }
-        if self._config.get("show_debug_attributes", False):
-            attrs.update({
-                ATTRIBUTES.VIOLATION_REGISTRY: {
-                    target: entry.expiry_iso
-                    for target, entry in self._violations_registry.items()
-                },
-                ATTRIBUTES.TRACKED_ENTITIES: self._tracked_entities,
-                ATTRIBUTES.VIOLATIONS_DEBUG: active_violations,
-                ATTRIBUTES.STATUS: "Non-Compliant" if self._attr_is_on else "Compliant",
-                ATTRIBUTES.WRITE_OPS: self._write_count
-            })
-        self._attr_extra_state_attributes = attrs
-
-    def _setup_condition_templates(self, condition: Any) -> None:
-        """        Recursively links the HA instance to condition templates.
-        Ensures that any 'value_template' defined in the YAML rules
-        has access to the Home Assistant object for proper rendering
-        of logic during evaluation.
+        By running this during setup, the evaluation engine can perform at peak
+        efficiency using pre-resolved data and cached configurations.
         """
+        RECURSIVE_KEYS = ["target", "grace_period", "group_grace", "allow_unavailable", "allow_unknown", "severity"]
+
         if isinstance(condition, list):
             for item in condition:
-                self._setup_condition_templates(item)
-        elif isinstance(condition, dict):
+                self._recursively_preprocess_rules(item, inherited_config)
+            return
+
+        if isinstance(condition, dict):
+            updated_config = {}
+            for key in RECURSIVE_KEYS:
+                if key in condition:
+                    if key == "target":
+                        # Resolve local target
+                        eids = self._get_entities_from_target(condition[key])
+                        _LOGGER.debug("PODDD RECURSIVE_TARGET: found %s in %s", eids, condition.get('alias', 'unnamed'))
+                        condition["target"] = {"entity_id": eids}
+                        self._cattr_tracked_entities.update(eids)
+
+                    # If target is defined HERE, then we won't inherit from parent
+                    updated_config[key] = condition[key]
+                elif key in inherited_config:
+                    # Else, do inherit what's available from parents
+                    condition[key] = inherited_config[key]
+                    updated_config[key] = inherited_config[key]
+
+            # Hass Injection for templates
             if "value_template" in condition:
                 condition["value_template"].hass = self.hass
 
-            # Check for nested logic blocks
             for key in ["and", "or", "not"]:
                 if key in condition:
-                    self._setup_condition_templates(condition[key])
+                    self._recursively_preprocess_rules(condition[key], updated_config)
 
-    def _is_rule_compliant(self, rule: dict, state_obj: State | None) -> bool:
-        """        Evaluates a single rule against an entity's state object.
-        Handles special states like 'unavailable' and 'unknown' based
-        on the rule configuration before passing the entity to the
-        recursive logic evaluation block.
-        """
-        if state_obj is None:
-            return False
-
-        if state_obj.state == "unavailable":
-            return  rule.get("allow_unavailable", False)
-        if state_obj.state == "unknown":
-            return  rule.get("allow_unknown", False)
-
-        # We start the evaluation. Since rule["condition"] is a list,
-        # it's an implicit AND.
-        return self._is_metacondition_compliant({"and": rule["condition"]}, state_obj)
-
-    def _is_metacondition_compliant(self, item: dict | list, state_obj: State) -> bool:
-        """        Handles recursive logic operators (AND, OR, NOT).
-        Orchestrates complex rule trees by evaluating nested logic
-        blocks and calling atomic condition checks for individual
-        state or attribute comparisons.
-        """
-        # Handle lists (implicit AND)
-        if isinstance(item, list):
-            return all(self._is_metacondition_compliant(i, state_obj) for i in item)
-        # Logic Operators
-        if "and" in item: # violation if ALL sub-condition are violations
-            return all(self._is_metacondition_compliant(i, state_obj) for i in item["and"])
-        if "or" in item: # compliant if ANY sub-condition are compliant
-            return any(self._is_metacondition_compliant(i, state_obj) for i in item["or"])
-        if "not" in item:
-            not_clause = item["not"]
-            if isinstance(not_clause, list):
-                return not all(self._is_metacondition_compliant(i, state_obj) for i in not_clause)
-            else:
-                return not self._is_metacondition_compliant(not_clause, state_obj)
-        # If it's not a logic operator, it MUST be an atomic condition
-        return self._is_condition_compliant(item, state_obj)
-
-    def _is_condition_compliant(self, condition: dict, state_obj: State) -> bool:
-        """        Performs an atomic evaluation of a specific condition.
-        Compares the target state or attribute against expected
-        numeric ranges, specific states, or rendered templates to
-        return a boolean violation result.
-        """
-
-        # Resolve target value (Attribute vs State)
-        target_attr = condition.get("attribute")
-        val_to_check = state_obj.attributes.get(target_attr) if target_attr else state_obj.state
-
-        # Handle case where attribute is missing
-        if target_attr and target_attr not in state_obj.attributes:
-            return False
-
-        # A. Value Template
-        if "value_template" in condition:
-            try:
-                res = condition["value_template"].async_render(
-                    variables={"t_state": val_to_check,
-                               "t_entity": state_obj,
-                               "t_id": state_obj.entity_id },
-                    parse_result=True
-                )
-                return  res
-            except Exception:
-                return False
-
-        # B. Expected Numeric
-        if "expected_numeric" in condition:
-            try:
-                val = float(val_to_check)
-                limits = condition["expected_numeric"]
-                if "min" in limits and val < limits["min"]:
-                    return False
-                if "max" in limits and val > limits["max"]:
-                    return False
-                return True
-            except (ValueError, TypeError):
-                return False
-
-        # C. Expected State
-        if "expected_state" in condition:
-            expected = condition["expected_state"]
-            if isinstance(expected, bool):
-                actual_bool = str(val_to_check).lower() in ON_EQUIVALENT_STATES
-                return actual_bool == expected
-            return str(val_to_check).lower() == str(expected).lower()
-
-        return True
-
-    def _get_severity_data(self, sev_cfg):
-        """        Helper to normalize severity configuration data.
-         Converts raw severity strings or dictionaries into a standardized
-         internal format containing both a numerical level and a
-         human-readable label for reporting.
-         """
-        if isinstance(sev_cfg, str):
-            return {"level": SEVERITY_LEVELS.get(sev_cfg, 1), "label": sev_cfg.capitalize()}
-        return {"level": sev_cfg["level"], "label": sev_cfg.get("label", f"Level {sev_cfg['level']}")}
 
     def _get_entities_from_target(self, target) -> list[str]:
         """        Resolves HA targets into a list of entity IDs.
@@ -433,19 +288,9 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                 entities.update(e.entity_id for e in er.async_entries_for_label(ent_reg, l_id))
         return list(entities)
 
-    def _create_timer(self, eid: str, expiry: datetime) -> RegistryEntry:
-        """Restores a timer from an expiry time in datetime format."""
-        return RegistryEntry(
-                eid,
-                expiry,
-                self.hass,
-                self._update_event_handler )
-
-    def _restore_timer(self, eid: str, iso_str: str) -> RegistryEntry:
-        """Restores a timer from an an expiry time in iso  string
-            (that was probably saved in attributes.)"""
-        return RegistryEntry.create_from_iso(
-            eid,
-            iso_str,
-            self.hass,
-            self._update_event_handler )
+    def _safe_deepcopy_rule(self, obj: Any) -> Any:
+        if isinstance(obj, dict):
+            return {k: self._safe_deepcopy_rule(v) for k, v in obj.items() if k != "hass"}
+        elif isinstance(obj, list):
+            return [self._safe_deepcopy_rule(i) for i in obj]
+        return copy.copy(obj)
