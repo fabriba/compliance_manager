@@ -15,6 +15,7 @@ binary_sensor:
     sensors:
       # Test 1: Semplice stato ON
       - name: "Lab Test Output 01"
+        alias: "Lab Test Output 01 - ExpOn, allowed violations 1"
         unique_id: cm_lab_test_01
         compliance:
           - target:
@@ -28,6 +29,7 @@ binary_sensor:
 
       # Test 2: Stato OFF con Grace Period
       - name: "Lab Test Output 02"
+        alias: "Lab Test Output 02 - a/b ExpOff, allowed violation -3, grace 5s sev watn, c/d ExpOff, allowed violation 1, grace 5s group grace sev info"
         unique_id: cm_lab_test_02
         compliance:
           - target:
@@ -36,7 +38,6 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_6
             expected_state: "off"
             allowed_violations_count: -3
-
             grace_period: "00:00:05"
             severity: warning
           - target:
@@ -46,11 +47,12 @@ binary_sensor:
             expected_state: "off"
             grace_period: "00:00:05"
             group_grace: true
-            severity: warning
+            severity: info
             allowed_violations_count: 1
 
       # Test 3: Logica AND
       - name: "Lab Test Output 03"
+        alias: "Lab Test Output 03 - ValueTemplate On in 3 ways, sev 2 with label"
         unique_id: cm_lab_test_03
         compliance:
           - target:
@@ -59,61 +61,66 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_10
                 - switch.compliance_manager_lab_tester_11
                 - switch.compliance_manager_lab_tester_12
-            expected_state: "on"
+            value_template:  "{{ states(t_id) == 'on' and t_state == 'on' and states(t_entity.entity_id) == 'on' }}"
+            severity:
+              level: 2
+              label: test
 
 
       # Test 4: Logica OR con severità critica
-      - alias: "Lab Test Output 04: Exp On/Off, Grace 5min (switch a/b) or 5 sec( c/d)"
-        name: "Lab Test Output 04"
+      - name: "Lab Test Output 04"
+        alias: "Lab Test Output 04 - ExpOn - Allow Available and Unknown"
         unique_id: cm_lab_test_04
         compliance:
           - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_13
                 - switch.compliance_manager_lab_tester_14
-            expected_state: "on"
-            grace_period:
-              minutes: 5
-            severity: "critical"
-          - target:
-              entity_id:
                 - switch.compliance_manager_lab_tester_15
                 - switch.compliance_manager_lab_tester_16
             expected_state: "on"
-            grace_period:
-              seconds: 5
-            severity: "critical"
+            allow_unavailable: true
+            allow_unknown: true
+
 
       # Test 5: Logica NOT
       - name: "Lab Test Output 05"
+        alias: "Lab Test Output 05 - a/bGrace 5min , c/d snooze 5min (via dashboard) - Test reboot persistence"
         unique_id: cm_lab_test_05
         compliance:
           - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_17
                 - switch.compliance_manager_lab_tester_18
+            expected_state: "on"
+            grace_period:
+              minutes: 5
+          - target:
+              entity_id:
                 - switch.compliance_manager_lab_tester_19
                 - switch.compliance_manager_lab_tester_20
-            expected_state: "pm"
+            expected_state: "on"
+
 
       # Test 6: Permetti Unavailable con severità numerica
       - name: "Lab Test Output 06"
+        alias: "Lab Test Output 06 - Switch independent: On if ActiveCount Attr of Test 05 > 2"
         unique_id: cm_lab_test_06
         compliance:
           - target:
               entity_id:
-                - switch.compliance_manager_lab_tester_21
-                - switch.compliance_manager_lab_tester_22
-                - switch.compliance_manager_lab_tester_23
-                - switch.compliance_manager_lab_tester_24
-            expected_state: "on"
-            allow_unavailable: true
+                - binary_sensor.lab_test_output_05
+            expected_number:
+              min: 2
+              max: 5
+            attribute: active_count
             severity:
               level: 4
               label: "Warning Low"
 
       # Test 7: Group Grace attivo
       - name: "Lab Test Output 07"
+        alias: "Lab Test Output 07 - ExpOn group grace"
         unique_id: cm_lab_test_07
         compliance:
           - target:
@@ -124,10 +131,10 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_28
             expected_state: "on"
             group_grace: true
-            grace_period: "00:00:20"
 
       # Test 8: Value Template complesso
       - name: "Lab Test Output 08"
+        alias: "Lab Test Output 08 - value_template on"
         unique_id: cm_lab_test_08
         compliance:
           - target:
@@ -141,6 +148,7 @@ binary_sensor:
 
       # Test 9: Permetti Unknown
       - name: "Lab Test Output 09"
+        alias: "Lab Test Output 09 - ExpOn allow unknown"
         unique_id: cm_lab_test_09
         compliance:
           - target:
@@ -154,6 +162,7 @@ binary_sensor:
 
       # Test 10: Combinazione finale AND/NOT con severità massima
       - name: "Lab Test Output 10"
+        alias: "Lab Test Output 10 - ExpOn sev 9 with label"
         unique_id: cm_lab_test_10
         compliance:
           - target:
