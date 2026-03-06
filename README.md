@@ -50,23 +50,13 @@ binary_sensor:
           - target:
               area_id: "server_room"
             severity: 3  # default: problem (= 1) , can range 1-10
-            grace_period: "00:02:00"
-            group_grace: true     # default: false
-            condition:
-              - alias: "_and_ clause descr. here, it's ignored by the code"
-                and:
-                  - expected_state: "on"
-                    alias: "clause descr. here, it's ignored by the code"
-                    allow_unavailable: true # default: false
-                    allow_unknown:     true # default: false
-                  - not:
-                    alias: "_not_ clause descr. here, ignored by the code"
-                      attribute: "overheating"
-                      expected_state: true
-                      alias: "clause descr. here, ignored by the code"
-                      grace_period: "00:00:10"
-                      group_grace: false      # override
-
+            expected_state: "on"
+            allow_unavailable: true # default: false
+            allow_unknown:     true # default: false
+            attribute: "overheating"
+            grace_period: "00:00:10"
+            group_grace: true      # default: false
+            allowed_violations: -2 #default: 0 ; negative X means "all but X"
           # Rule 2: Numeric check for battery levels via Labels
           - target:
               label_id: "battery_devices"
@@ -75,8 +65,7 @@ binary_sensor:
               label: "custom-details-here"
             grace_period:
               minutes: 10
-            condition:
-              - expected_numeric:
+            expected_numeric:
                   min: 20
                   max: 30
 
@@ -85,8 +74,7 @@ binary_sensor:
           - target:
               entity_id: sensor.living_room_temp
             severity: "info"
-            condition:
-              - value_template: "{{ t_state | float > 18.5 and states(t_id) | float < 25.0 and states(t_entity.entity_id) == 20 }}"
+            value_template: "{{ t_state | float > 18.5 and states(t_id) | float < 25.0 and states(t_entity.entity_id) == 20 }}"
 ```
 
 ### Configuration Keys
@@ -97,6 +85,7 @@ binary_sensor:
 - **`condition`**: A list of conditions. Supports `expected_state`, `expected_numeric`, `value_template`, and logical operators (`and`, `or`, `not`).
 - **`grace_period`**: Duration before a violation triggers the sensor. Accepts `HH:MM:SS` string or dictionary format.
 - **`group_grace`**: If `true`, the grace period is shared across all entities in the rule (relay logic). default is false.
+- **`allowed_violations`**: numberic: will only trigger a problem if more than x violations are found (eg: at least 2 windows are open) ; a negative number (eg: -2) can be used to indicate more than "all but 2" (eg: at least 2 entities must be compliant >> tollerate  violations unless there's less than 2 compliant entities)
 - **`severity`**: Can be a string (`critical`, `problem`, `warning`, `unusual`, `info`) or a custom dict `{level: X, label: "Name"}`.
 ** allow_unavailable**: false by default, should be self explanatory (applies to attribute instead of state if attribute is passed)
 ** allow_unknown**: false by default, should be self explanatory (applies to attribute instead of state if attribute is passed)
