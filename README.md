@@ -16,7 +16,7 @@ It goes beyond simple state monitoring, offering granular control over nested co
 
 ## 💡 Abandonware by Design
 
-I created this integration because I felt Home Assistant lacked a native, flexible way to manage complex compliance logic. However, **I am fully aware of my time constraints and I won't be able to maintain this project in the long run.**
+I created this integration because I felt Home Assistant lacked a flexible way to manage complex compliance logic. However, **I am fully aware of my time constraints and I won't be able to maintain this project in the long run.**
 
 I went out of my way to create a working lab environment, documenting every function as thoroughly as possible to ensure that **forking and maintaining this is as simple as possible.** You are free to fork it, modify it, and take full credit—no strings attached. I hope this serves as a solid foundation for a feature that I believe can be beneficial to many.
 
