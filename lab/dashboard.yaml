@@ -7,9 +7,8 @@ views:
       - type: vertical-stack
         cards:
           - type: markdown
-            content: >
-              ### Test 1: AND/OR/NOT Test; Not unav, not unkn, Exp On (all), Lab
-              Test Output 01 has 2 or 3 active_count
+            content: |
+              ### Lab Test Output 01 - ExpOn, allowed violations 1
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -151,7 +150,10 @@ views:
               state_attr('binary_sensor.lab_test_output_01','active_violations_debug_info')
               }}
           - type: markdown
-            content: '### Test 02: Expected OFF (Grace Period 10s; Severity Warning)'
+            content: >-
+              ### Lab Test Output 02 - a/b ExpOff, allowed violation -3, grace
+              5s sev watn, c/d ExpOff, allowed violation 1, grace 5s group grace
+              sev info
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -293,7 +295,9 @@ views:
               state_attr('binary_sensor.lab_test_output_02','active_violations_debug_info')
               }}
           - type: markdown
-            content: '### Test 03: Logic AND (Expected ON + Template Always True)'
+            content: >-
+              ### Lab Test Output 03 - ValueTemplate On in 3 ways, sev 2 with
+              label
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -435,9 +439,8 @@ views:
               state_attr('binary_sensor.lab_test_output_03','active_violations_debug_info')
               }}
           - type: markdown
-            content: >-
-              ### Test 04: Exp On/Off - 2 targets (a/b grace 5min + c/d grace
-              5sec); Sev=Critical - use for testing reboot persistence
+            content: |
+              ### Lab Test Output 04 - ExpOn - Allow Available and Unknown
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -579,9 +582,9 @@ views:
               state_attr('binary_sensor.lab_test_output_04','active_violations_debug_info')
               }}
           - type: markdown
-            content: >-
-              ### Test 05: Logic NOT (Expected Not Off) (allow* are left default
-              and treated outside the Not clause)
+            content: >
+              ### Lab Test Output 05 - a/bGrace 5min , c/d snooze 5min (via
+              dashboard) - Test reboot persistence
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -652,7 +655,7 @@ views:
                           service_data:
                             entity_id: binary_sensor.lab_test_output_05
                             sub_entities: switch.compliance_manager_lab_tester_19
-                            duration: '00:00:05'
+                            duration: '00:05:00'
               - type: vertical-stack
                 cards:
                   - type: button
@@ -689,7 +692,7 @@ views:
                       service: compliance_manager.snooze
                       service_data:
                         entity_id: binary_sensor.lab_test_output_05
-                        duration: '00:00:05'
+                        duration: '00:05:00'
           - type: markdown
             content: >
               - **status:** {{
@@ -723,7 +726,9 @@ views:
               state_attr('binary_sensor.lab_test_output_05','active_violations_debug_info')
               }}
           - type: markdown
-            content: '### Test 06: Allow Unavailable, Expected On ; Sev = 40 '
+            content: >-
+              ### Lab Test Output 06 - Switch independent: On if ActiveCount
+              Attr of Test 05 > 2
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -865,7 +870,7 @@ views:
               state_attr('binary_sensor.lab_test_output_06','active_violations_debug_info')
               }}
           - type: markdown
-            content: '### Test 07: Expected On; Group Grace (20s)'
+            content: '### Lab Test Output 07 - ExpOn group grace'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -1007,7 +1012,7 @@ views:
               state_attr('binary_sensor.lab_test_output_07','active_violations_debug_info')
               }}
           - type: markdown
-            content: '### Test 08: Value Template { states(target_entity) == "on" }'
+            content: '### Lab Test Output 08 - value_template on"'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -1149,7 +1154,7 @@ views:
               state_attr('binary_sensor.lab_test_output_08','active_violations_debug_info')
               }}
           - type: markdown
-            content: '### Test 09: Allow Unknown, Expected On'
+            content: '### Lab Test Output 09 - ExpOn allow unknown'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -1291,9 +1296,8 @@ views:
               state_attr('binary_sensor.lab_test_output_09','active_violations_debug_info')
               }}
           - type: markdown
-            content: >-
-              ### Test 10: Logic AND-NOT (Expected on and not off); composite
-              Severity = 100 (Panic Label)
+            content: >
+              ### Lab Test Output 10 - ExpOn sev 9 with label
           - type: horizontal-stack
             cards:
               - type: vertical-stack
