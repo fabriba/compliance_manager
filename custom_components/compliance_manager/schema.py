@@ -42,8 +42,8 @@ BINSENS_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
                         )
                     )
                 },
-                        cv.has_at_least_one_key("expected_state", "expected_numeric", "value_template"),
-                        cv.has_at_most_one_key("expected_state", "expected_numeric", "value_template")
+                        cv.has_at_least_one_key("expected_state", "expected_number", "value_template"),
+                        cv.has_at_most_one_key("expected_state", "expected_number", "value_template")
             )]
         ),
     }]),
