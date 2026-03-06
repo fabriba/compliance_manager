@@ -13,115 +13,73 @@ binary_sensor:
   - platform: compliance_manager
     show_debug_attributes: true
     sensors:
-# Test 01: AND/OR/NOT Test; Expoff (switches) OR is problem, but with <= 2 violations (lab_test_output_02)
+      # Test 1: Semplice stato ON
       - name: "Lab Test Output 01"
-        alias: "Lab Test Output 01: Comprehensive Logic Check"
         unique_id: cm_lab_test_01
         compliance:
-          - alias: "Main Rule: Comprehensive Logic Check"
-            target:
+          - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_1
                 - switch.compliance_manager_lab_tester_2
                 - switch.compliance_manager_lab_tester_3
                 - switch.compliance_manager_lab_tester_4
-                - binary_sensor.lab_test_output_02
-            condition:
-              - alias: "Is compliant if: OPT.A) either is a switch off, or is a binary_sensor with active_count <= 2"
-                or:
-                - alias:   "Ok if switch is off (switch does not have active_count attrib)"
-                  value_template: >
-                                  {{  is_state(t_id, 'off')  and
-                                      is_state(t_entity.entity_id,  'off') and
-                                      t_state == 'off'  and
-                                     ( states(t_id) is not none and 'active_count' not in states[t_id].attributes ) 
-                                   }}
-                - alias: "ok if binary_sensor with active_count == 1 or  2 "
-                  target:
-                    entity_id:
-                      - binary_sensor.lab_test_output_02
-                  and:
-                  - alias: "Invert Target State"
-                    not:
-                    - alias: "Check Target State"
-                      expected_state: "off"
-                  - alias: "Check Self-Active Count"
-                    attribute: "active_count"
-                    expected_numeric:
-                      min: 0
-                      max: 1
+            expected_state: "on"
+            allowed_violations_count: 1
 
-
-      # Test 02: Stato OFF con Grace Period
+      # Test 2: Stato OFF con Grace Period
       - name: "Lab Test Output 02"
-        alias: "# Test 02: Exp OFF with 3sec Grace Period (entity 1  only used if added to label_test_02 and entity 2 if added to areas-kitchen"
         unique_id: cm_lab_test_02
         compliance:
           - target:
-              label_id:
-                label_test_02 #- switch.compliance_manager_lab_tester_5
-              area_id:
-                areas-kitchen #- switch.compliance_manager_lab_tester_6
+              entity_id:
+                - switch.compliance_manager_lab_tester_5
+                - switch.compliance_manager_lab_tester_6
+            expected_state: "off"
+            allowed_violations_count: -3
+
+            grace_period: "00:00:05"
+            severity: warning
+          - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_7
                 - switch.compliance_manager_lab_tester_8
-            condition:
-              - expected_state: "off"
-            grace_period: "00:00:03"
+            expected_state: "off"
+            grace_period: "00:00:05"
+            group_grace: true
             severity: warning
+            allowed_violations_count: 1
 
-      # Test 3: Test 03: switch a/b/c/d Exp Off/NotOff/Off/NotOff (recursive logic)
+      # Test 3: Logica AND
       - name: "Lab Test Output 03"
-        alias: "# Test 03: switch a/b/c/d Exp Off/NotOff/Off/NotOff (recursive logic)
         unique_id: cm_lab_test_03
         compliance:
           - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_9
-                #- switch.compliance_manager_lab_tester_10
-                #- switch.compliance_manager_lab_tester_11
-                #- switch.compliance_manager_lab_tester_12
-            condition:
-              - expected_state: "off"
-              - and:
-                  - not:
-                      - expected_state: "off"
-                    target:
-                      entity_id: switch.compliance_manager_lab_tester_10
-                  - and:
-                    - expected_state: "off"
-                      target:
-                        entity_id: switch.compliance_manager_lab_tester_11
-                    - not:
-                        - expected_state: "off"
-                          target:
-                            entity_id: switch.compliance_manager_lab_tester_12
+                - switch.compliance_manager_lab_tester_10
+                - switch.compliance_manager_lab_tester_11
+                - switch.compliance_manager_lab_tester_12
+            expected_state: "on"
 
 
       # Test 4: Logica OR con severità critica
-      - alias: "est 04: Reboot Persistence: Exp On/Off, Grace 5min (1st switch) or 5 sec, add a 5min snooze to test that too"
+      - alias: "Lab Test Output 04: Exp On/Off, Grace 5min (switch a/b) or 5 sec( c/d)"
         name: "Lab Test Output 04"
         unique_id: cm_lab_test_04
         compliance:
           - target:
               entity_id:
                 - switch.compliance_manager_lab_tester_13
-            condition:
-              - or:
-                - expected_state: "on"
-                - expected_state: "off"
+                - switch.compliance_manager_lab_tester_14
+            expected_state: "on"
             grace_period:
               minutes: 5
             severity: "critical"
           - target:
               entity_id:
-                - switch.compliance_manager_lab_tester_14
                 - switch.compliance_manager_lab_tester_15
                 - switch.compliance_manager_lab_tester_16
-            condition:
-              - or:
-                - expected_state: "on"
-                - expected_state: "off"
+            expected_state: "on"
             grace_period:
               seconds: 5
             severity: "critical"
@@ -136,9 +94,7 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_18
                 - switch.compliance_manager_lab_tester_19
                 - switch.compliance_manager_lab_tester_20
-            condition:
-              - not:
-                 - expected_state: "off"
+            expected_state: "pm"
 
       # Test 6: Permetti Unavailable con severità numerica
       - name: "Lab Test Output 06"
@@ -150,11 +106,10 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_22
                 - switch.compliance_manager_lab_tester_23
                 - switch.compliance_manager_lab_tester_24
-            condition:
-              - expected_state: "on"
+            expected_state: "on"
             allow_unavailable: true
             severity:
-              level: 8
+              level: 4
               label: "Warning Low"
 
       # Test 7: Group Grace attivo
@@ -167,8 +122,7 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_26
                 - switch.compliance_manager_lab_tester_27
                 - switch.compliance_manager_lab_tester_28
-            condition:
-              - expected_state: "on"
+            expected_state: "on"
             group_grace: true
             grace_period: "00:00:20"
 
@@ -182,8 +136,7 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_30
                 - switch.compliance_manager_lab_tester_31
                 - switch.compliance_manager_lab_tester_32
-            condition:
-              - value_template: "{{ states(t_id) == 'on' and t_state == 'on' and states(t_entity.entity_id) == 'on' }}"
+            value_template: "{{ states(t_id) == 'on' and t_state == 'on' and states(t_entity.entity_id) == 'on' }}"
 
 
       # Test 9: Permetti Unknown
@@ -196,8 +149,7 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_34
                 - switch.compliance_manager_lab_tester_35
                 - switch.compliance_manager_lab_tester_36
-            condition:
-              - expected_state: "on"
+            expected_state: "on"
             allow_unknown: true
 
       # Test 10: Combinazione finale AND/NOT con severità massima
@@ -210,11 +162,7 @@ binary_sensor:
                 - switch.compliance_manager_lab_tester_38
                 - switch.compliance_manager_lab_tester_39
                 - switch.compliance_manager_lab_tester_40
-            condition:
-              - and:
-                - expected_state: "on"
-                - not:
-                    - expected_state: "off"
+            expected_state: "on"
             severity:
-              level: 10
+              level: 9
               label: "No Panic"

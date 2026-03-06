@@ -265,10 +265,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_02','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_02','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_02','ignored_violations') }} 
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_02','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_02','ignored_violations')
+              }}  ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_02', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_02','severity_label')
@@ -407,10 +407,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_03','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_03','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_03','ignored_violations') }}  
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_03','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_03','ignored_violations')
+              }}   ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_03', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_03','severity_label')
@@ -551,10 +551,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_04','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_04','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_04','ignored_violations') }}  
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_04','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_04','ignored_violations')
+              }}   ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_04', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_04','severity_label')
@@ -695,10 +695,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_05','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_05','active_count') } --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_05','ignored_violations') }} } 
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_05','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_05','ignored_violations')
+              }}  ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_05', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_05','severity_label')
@@ -837,10 +837,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_06','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_06','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_06','ignored_violations') }}  
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_06','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_06','ignored_violations')
+              }}   ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_06', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_06','severity_label')
@@ -979,10 +979,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_07','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_07','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_07','ignored_violations') }}  
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_07','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_07','ignored_violations')
+              }}   ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_07', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_07','severity_label')
@@ -1121,10 +1121,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_08','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_08','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_08','ignored_violations') }}  
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_08','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_08','ignored_violations')
+              }}   ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_08', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_08','severity_label')
@@ -1263,10 +1263,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_09','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_09','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_09','ignored_violations') }}  
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_09','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_09','ignored_violations')
+              }}   ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_09', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_09','severity_label')
@@ -1407,10 +1407,10 @@ views:
               - **status:** {{
               state_attr('binary_sensor.lab_test_output_10','status') }}  --- 
               **active_count:** {{
-              state_attr('binary_sensor.lab_test_output_10','active_count') }} --- 
-              **ignored_count:** {{
-              state_attr('binary_sensor.lab_test_output_10','ignored_violations') }}  
-              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_10','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_10','ignored_violations')
+              }}   ---  **Severity:** {{
               state_attr('binary_sensor.lab_test_output_10', 'severity') }} 
               ---  **severity_label:** {{
               state_attr('binary_sensor.lab_test_output_10','severity_label')

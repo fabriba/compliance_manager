@@ -7,7 +7,7 @@ LAB_PREFIX = "compliance_manager_lab_tester_"
 DOMAIN = "compliance_manager"  # Change this to your actual folder name
 PLATFORMS = ["binary_sensor", "switch"]
 ON_EQUIVALENT_STATES = [ "on", "true", "home", "open", "connected", "1", "yes", "problem", "unsafe", "detected", "active" ]
-MAX_LOGIC_CONTITIONS_DEPTH = 5
+CONDITION_KEYS = ["expected_state", "expected_number", "value_template"]
 
 class ComplianceManagerAttributes:
     """Constants for ComplianceManager Attributes."""
@@ -17,6 +17,7 @@ class ComplianceManagerAttributes:
     GRACE_PERIODS = "grace_periods"
     ACTIVE_VIOLATIONS = "active_violations"
     ACTIVE_COUNT = "active_count"
+    ALLOWED_VIOLATIONS = "ignored_violations"
     SNOOZE_REGISTRY = "snooze_registry"
 
     # Debug/Detailed Attributes

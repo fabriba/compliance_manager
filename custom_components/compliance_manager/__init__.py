@@ -8,7 +8,7 @@ from homeassistant.helpers.reload import async_setup_reload_service
 from homeassistant.helpers import entity_registry as er, discovery
 
 from .const import DOMAIN, PLATFORMS
-from .services import async_register_services # Importa la nuova funzione
+from .services import async_register_services
 
 _LOGGER = logging.getLogger(__name__)
 
