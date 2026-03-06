@@ -47,36 +47,27 @@ ATONIC_CONDITION_SCHEMA = vol.All(
 # 3. Define Logic Block - UPDATED to be recursive
 def _get_recursive_condition_schema(depth=MAX_LOGIC_CONTITIONS_DEPTH):
     """Return a recursive condition item schema limited to `depth`."""
-    if depth <= 0:
-        # at leaf only allow atomic conditions
-        return ATONIC_CONDITION_SCHEMA
-
-    # placeholder for recursion
-    def make_child_schema(d):
-        return vol.Any(ATONIC_CONDITION_SCHEMA, _logical_mapping_schema(d))
 
     def _logical_mapping_schema(d):
-        # each operator must map to a list of condition items (recursing with depth-1)
+        # Definiamo cosa può esserci in un nodo logico
         child_item = _get_recursive_condition_schema(d - 1)
-        return vol.All(
-            {
-                vol.Optional("and"): vol.All(cv.ensure_list, [child_item]),
-                vol.Optional("or"): vol.All(cv.ensure_list, [child_item]),
-                vol.Optional("not"): vol.All(cv.ensure_list, [child_item]),
-                **SHARED_CONDITION_FIELDS,
-            },
-            cv.has_at_least_one_key("and", "or", "not")
-        )
+        return vol.Schema({
+            vol.Optional("and"): vol.All(cv.ensure_list, [child_item]),
+            vol.Optional("or"): vol.All(cv.ensure_list, [child_item]),
+            vol.Optional("not"): vol.All(cv.ensure_list, [child_item]),
+            # Permettiamo 'condition' come alias opzionale per retrocompatibilità/leggibilità
+            vol.Optional("condition"): vol.All(cv.ensure_list, [child_item]),
+            **SHARED_CONDITION_FIELDS,
+        })
 
+    if depth <= 0:
+        return ATONIC_CONDITION_SCHEMA
+
+    # Un nodo può essere o Atomico (foglia) o Logico (container)
     return vol.Any(ATONIC_CONDITION_SCHEMA, _logical_mapping_schema(depth))
 
 
-#4. Final validator: always a list of condition items (each item is the recursive schema)
-FINAL_CONDITION_VALIDATOR = vol.All(
-    cv.ensure_list,
-    [ _get_recursive_condition_schema(MAX_LOGIC_CONTITIONS_DEPTH) ]
-)
-
+COMPLIANCE_RULE_ITEM_SCHEMA = _get_recursive_condition_schema(MAX_LOGIC_CONTITIONS_DEPTH)
 
 UNVALIDATED_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
     vol.Required("sensors"): vol.All(cv.ensure_list, [{
@@ -84,23 +75,17 @@ UNVALIDATED_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
         vol.Required("name"): cv.string,
         vol.Optional("unique_id"): cv.string,
         vol.Optional("icon", default="mdi:shield-check"): cv.icon,
-        # This is the native HA "target" schema (entity_id, device_id, area_id, label_id)
-        vol.Required("compliance"): vol.All(
+
+        # Ogni elemento della lista compliance_rules è ora validato ricorsivamente
+        vol.Required("compliance_rules"): vol.All(
             cv.ensure_list,
-            [vol.All(
-                {
-                    vol.Required("condition"): FINAL_CONDITION_VALIDATOR,
-                    **SHARED_CONDITION_FIELDS,
-                }
-            )]
+            [COMPLIANCE_RULE_ITEM_SCHEMA]
         ),
     }]),
     vol.Optional("show_debug_attributes", default=False): cv.boolean,
 })
 
-BINSENS_PLATFORM_SCHEMA = UNVALIDATED_PLATFORM_SCHEMA
 BINSENS_PLATFORM_SCHEMA = vol.All(UNVALIDATED_PLATFORM_SCHEMA, _binarysensor_schema_validator)
-
 
 ######################## SWITCH SCHEMA ###############
 

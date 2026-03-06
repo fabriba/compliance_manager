@@ -8,6 +8,10 @@ DOMAIN = "compliance_manager"  # Change this to your actual folder name
 PLATFORMS = ["binary_sensor", "switch"]
 ON_EQUIVALENT_STATES = [ "on", "true", "home", "open", "connected", "1", "yes", "problem", "unsafe", "detected", "active" ]
 MAX_LOGIC_CONTITIONS_DEPTH = 5
+ATOMIC_KEYS = {"expected_state", "expected_numeric", "value_template"}
+LOGIC_KEYS = {"and", "or", "not"}
+RECURSIVE_KEYS = ["target", "grace_period", "group_grace", "allow_unavailable", "allow_unknown", "severity"]
+
 
 class ComplianceManagerAttributes:
     """Constants for ComplianceManager Attributes."""

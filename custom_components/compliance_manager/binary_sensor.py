@@ -28,10 +28,14 @@ from .const import (
     DEFAULT_ICON,
     DOMAIN,
     ComplianceManagerAttributes as ATTRIBUTES,
+    RECURSIVE_KEYS
 )
 from .schema import BINSENS_PLATFORM_SCHEMA  as PLATFORM_SCHEMA
 from .timers import RegistryEntry, ComplianceTimerMixin
 from .engine import ComplianceLogicMixin
+from .engine import get_atomic_key, get_logic_key
+
+from pprint import pprint as pp
 
 _LOGGER = logging.getLogger(__name__)
 _ = PLATFORM_SCHEMA # this only avoids "unused import warnings
@@ -121,32 +125,10 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity, ComplianceTimer
               state change events for all relevant entities.
               """
             _LOGGER.debug("PODDD SETUP_START:  %s", self._attr_name)
-            optimized_compliance = []
-            for rule in  self._config.get("compliance", []):
-                # 1. Resolve Root Target
-                root_eids = self._get_entities_from_target(rule["target"])
-                self._cattr_tracked_entities.update(root_eids)
+            self._optimized_compliance = self._recursively_preprocess_rules( self._config.get("compliance_rules"))
+            self._optimized_compliance = self._add_grace_targets_to_optimized_compliance
 
-                for eid in root_eids:
-                    new_rule = self._safe_deepcopy_rule(rule)
-                    new_rule["target"] = {"entity_id": eid}
-
-                    # 1b. Process the list of conditions
-                    # Schema guarantees this is a list now
-                    for cond_item in new_rule["condition"]:
-                        self._recursively_preprocess_rules(cond_item, new_rule)
-
-                    optimized_compliance.append(new_rule)
-                    _LOGGER.debug(
-                        "PODDD SETUP: Flattened Rule for %s. Condition IDs: %s",
-                        eid,
-                        [id(c) for c in new_rule["condition"]]
-                    )
-
-            # 2. Overwrite self._compliance with the recursively optimized version
-            self._optimized_compliance = optimized_compliance
-            _LOGGER.debug("PODDD FINAL_TRACKED_LIST: sensor %s listens to entity: %s", self._attr_name,
-                            list(self._cattr_tracked_entities))
+            _LOGGER.warning(f"PODDD DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD OPTIMIZATION COMPLETED: {self._attr_name=} ; {self._optimized_compliance=}")
 
             # 3. Standard event setup
             if self._cattr_tracked_entities:
@@ -223,7 +205,7 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity, ComplianceTimer
         self.async_schedule_update_ha_state()
 
 
-    def _recursively_preprocess_rules(self, condition: Any, inherited_config: dict) -> None:
+    def _recursively_preprocess_rules(self, condition_list: list) -> list:
         """
         Recursively process and optimize the rule logic tree during initialization.
 
@@ -238,41 +220,50 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity, ComplianceTimer
         By running this during setup, the evaluation engine can perform at peak
         efficiency using pre-resolved data and cached configurations.
         """
-        RECURSIVE_KEYS = ["target", "grace_period", "group_grace", "allow_unavailable", "allow_unknown", "severity"]
 
-        if isinstance(condition, list):
-            for item in condition:
-                self._recursively_preprocess_rules(item, inherited_config)
-            return
+        optimized_condition_list = []
+        for idx, dict_condition in enumerate(condition_list):
+            atomic_key = get_atomic_key(dict_condition)
+            logic_key = get_logic_key(dict_condition)
 
-        if isinstance(condition, dict):
-            updated_config = {}
-            for key in RECURSIVE_KEYS:
-                if key in condition:
-                    if key == "target":
-                        # Resolve local target
-                        eids = self._get_entities_from_target(condition[key])
-                        _LOGGER.debug("PODDD RECURSIVE_TARGET: found %s in %s", eids, condition.get('alias', 'unnamed'))
-                        condition["target"] = {"entity_id": eids}
-                        self._cattr_tracked_entities.update(eids)
+            # a) can be a single rule with multiple eids
+            # b) can be a list of  rules with multiple eids
+            # c) can be a logic node with multiple eids
 
-                    # If target is defined HERE, then we won't inherit from parent
-                    updated_config[key] = condition[key]
-                elif key in inherited_config:
-                    # Else, do inherit what's available from parents
-                    condition[key] = inherited_config[key]
-                    updated_config[key] = inherited_config[key]
+            if atomic_key:
+                eids = self._get_entities_from_target(dict_condition["target"])
+                for eidx, eid in enumerate(eids):
+                    optimized_child_dict = dict_condition.copy()
+                    optimized_child_dict["target"] = {"entity_id": eid}  # Forza l'ID singolo
+                    optimized_child_dict.pop("group_grace") #doesn't make sense at single target leaf-levels
+                    optimized_dict_condition["grace_target"] = eid
+                    self._cattr_tracked_entities.add(eid)
+                    if "value_template" in optimized_child_dict:
+                        optimized_child_dict["value_template"].hass = self.hass
+                    optimized_children_list.append(optimized_child_dict)
+                # implicit "and" amongst targets to handle group_grace at leaf level
+                optimized_dict_condition["and"] = optimized_children_list
+                if "group_grace" in optimized_dict_condition:
+                    _tmp_idx = optimized_dict_condition.get('idx', f"{idx}_{eidx}")
+                    optimized_dict_condition["grace_target"] = f"{self._attr_name}___rule_{_tmp_idx}"
+                optimized_condition_list.append(optimized_dict_condition)
 
-            # Hass Injection for templates
-            if "value_template" in condition:
-                condition["value_template"].hass = self.hass
+            elif logic_key:
+                _LOGGER.warning(f"PODDDD {dict_condition[logic_key]=}")
+                for cidx, child in enumerate(dict_condition[logic_key]):
+                    for recursive_key in RECURSIVE_KEYS:
+                        if recursive_key not in child and recursive_key in dict_condition:
+                            child[recursive_key] = dict_condition[recursive_key]
+                            child["idx"] = f"{dict_condition.get("idx"),idx}_{cidx}"
 
-            for key in ["and", "or", "not"]:
-                if key in condition:
-                    self._recursively_preprocess_rules(condition[key], updated_config)
+                optimized_children_list = self._recursively_preprocess_rules(dict_condition[logic_key])
+                optimized_dict_condition = dict_condition.copy()
+                optimized_dict_condition[logic_key] = optimized_children_list
+                optimized_condition_list.append(optimized_dict_condition)
 
+        return optimized_condition_list
 
-    def _get_entities_from_target(self, target) -> list[str]:
+    def _get_entities_from_target(self, target: dict) -> list[str]:
         """        Resolves HA targets into a list of entity IDs.
         Interprets configuration targets containing specific entity IDs,
         area IDs, or labels, and queries the registry to provide a

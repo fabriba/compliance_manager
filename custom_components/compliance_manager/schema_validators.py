@@ -1,9 +1,8 @@
 import voluptuous as vol
-
+from .const import LOGIC_KEYS, ATOMIC_KEYS
 def _recursive_validate_target(item):
     """Recursively verify that every condition branch has a target (local or inherited)."""
-    ATOMIC_KEYS = {"expected_state", "expected_numeric", "value_template"}
-    LOGIC_KEYS = {"and", "or", "not"}
+
 
     if not isinstance(item, dict):
         raise vol.Invalid(f"Condition item must be a dictionary: {item=}")
@@ -46,11 +45,11 @@ def _binarysensor_schema_validator(config):
             used_unique_ids.add(unique_id)
 
         # validate 'compliance' list further if needed
-        if "compliance" not in sensor or not isinstance(sensor["compliance"], list):
+        if "compliance_rules" not in sensor or not isinstance(sensor["compliance_rules"], list):
             raise vol.Invalid(f"{raise_id} missing 'compliance' or not  a list")
 
 
-        for cidx, rule in enumerate(sensor.get("compliance", [])):
+        for cidx, rule in enumerate(sensor.get("compliance_rules", [])):
             # The root of the compliance rule can define a global target
             root_has_target = rule.get("target") is not None
             if root_has_target:
