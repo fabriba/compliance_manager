@@ -25,7 +25,7 @@ I went out of my way to create a working lab environment, documenting every func
 ## Features
 
 - 🎯 **Dynamic Targeting**: Monitor single entities, entire **Areas**, or **Labels**. New devices added to an area are picked up immediately and automatically.
-- 🌳 **Recursive Logic**: Build complex rules using nested `and`, `or`, and `not` operators with theoretically infinite depth (limited to 5 for performance reasons at this stage).
+- 🌳 **Flexible Logic**: Build complex rules using templates, or simple maintainable ones using expectes states and basic modifiers.
 - 🔍 **Attribute Inspection**: Check specific attributes (e.g., `battery_level`, `firmware_version`) or use Jinja2 templates for advanced evaluations.
 - ⏳ **Intelligent Grace Periods**: Prevent false positives with per-entity or group-based grace periods that survive reboots.
 - 💤 **Snooze Management**: A dedicated service to temporarily ignore specific violations (e.g., "ignore open garage door for 2 hours while working").
