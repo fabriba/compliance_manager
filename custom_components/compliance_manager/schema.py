@@ -20,7 +20,7 @@ BINSENS_PLATFORM_SCHEMA = cv.PLATFORM_SCHEMA.extend({
                     vol.Optional("alias"): cv.string,
                     vol.Optional("attribute"): cv.string,
                     vol.Optional("expected_state"): vol.Any(cv.string, vol.Coerce(float), bool),
-                    vol.Optional("expected_numeric"): vol.All(
+                    vol.Optional("expected_number"): vol.All(
                         vol.Schema({
                             vol.Optional("min"): vol.Coerce(float),
                             vol.Optional("max"): vol.Coerce(float),
