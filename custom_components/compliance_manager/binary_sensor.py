@@ -355,15 +355,16 @@ class ComplianceManagerSensor(RestoreEntity, BinarySensorEntity):
                                "t_id": state_obj.entity_id },
                     parse_result=True
                 )
+                _LOGGER.debug(f"{condition["value_template"]=}: {res=}. {val_to_check=}, {state_obj.entity_id=}")
                 return  res
             except Exception:
                 return False
 
         # B. Expected Numeric
-        if "expected_numeric" in condition:
+        if "expected_number" in condition:
             try:
                 val = float(val_to_check)
-                limits = condition["expected_numeric"]
+                limits = condition["expected_number"]
                 if "min" in limits and val < limits["min"]:
                     return False
                 if "max" in limits and val > limits["max"]:
