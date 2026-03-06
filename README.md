@@ -81,14 +81,14 @@ binary_sensor:
 
 - **`target`**: Supports `entity_id`, `area_id`, or `label_id`.
 - **attribute**: by default "state" is evaluated, if this is passed, state_attr is evaluated instead (ignored by value_template, see below)
-- ** value_template**: you can use t_state, t_id or t_entity (t_ as in target). t_entity and t_id allow to access attributes
-- **`condition`**: A list of conditions. Supports `expected_state`, `expected_numeric`, `value_template`, and logical operators (`and`, `or`, `not`).
+- **`value_template**`**: you can use t_state, t_id or t_entity (t_ as in target). t_entity and t_id allow to access attributes
+- **``expected_state` and `expected_numeric``**: A list of simple, readable conditions. When multiple rules are used, they are evaluated with implicit `and` logic.
 - **`grace_period`**: Duration before a violation triggers the sensor. Accepts `HH:MM:SS` string or dictionary format.
 - **`group_grace`**: If `true`, the grace period is shared across all entities in the rule (relay logic). default is false.
 - **`allowed_violations`**: numberic: will only trigger a problem if more than x violations are found (eg: at least 2 windows are open) ; a negative number (eg: -2) can be used to indicate more than "all but 2" (eg: at least 2 entities must be compliant >> tollerate  violations unless there's less than 2 compliant entities)
 - **`severity`**: Can be a string (`critical`, `problem`, `warning`, `unusual`, `info`) or a custom dict `{level: X, label: "Name"}`.
-** allow_unavailable**: false by default, should be self explanatory (applies to attribute instead of state if attribute is passed)
-** allow_unknown**: false by default, should be self explanatory (applies to attribute instead of state if attribute is passed)
+**`allow_unavailable`**: false by default, should be self explanatory (applies to attribute instead of state if attribute is passed)
+**`allow_unknown`**: false by default, should be self explanatory (applies to attribute instead of state if attribute is passed)
 
 ---
 
