@@ -7,7 +7,9 @@ views:
       - type: vertical-stack
         cards:
           - type: markdown
-            content: '### Test 01: AND/OR/NOT Test; Expoff (switches) OR is problem, but with <= 2 violations (lab_test_output_02)
+            content: >
+              ### Test 1: AND/OR/NOT Test; Not unav, not unkn, Exp On (all), Lab
+              Test Output 01 has 2 or 3 active_count
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -117,15 +119,39 @@ views:
                         entity_id: binary_sensor.lab_test_output_01
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_01','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_01','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_01', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_01','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_01','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_01','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_01', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_01', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_01','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_01','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_01','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_01','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_01','active_count') }}
+              ---  **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_01','ignored_violations')
+              }}  ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_01', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_01','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_01','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_01','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_01', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_01','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_01','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_01','active_violations_debug_info')
+              }}
           - type: markdown
-            content: '### Test 02: Exp OFF with 3sec Grace Period (entity 1  only used if added to label_test_02 and entity 2 if added to areas-kitchen'
+            content: '### Test 02: Expected OFF (Grace Period 10s; Severity Warning)'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -235,15 +261,39 @@ views:
                         entity_id: binary_sensor.lab_test_output_02
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_02','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_02','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_02', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_02','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_02','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_02','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_02', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_02', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_02','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_02','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_02','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_02','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_02','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_02','ignored_violations') }} 
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_02', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_02','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_02','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_02','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_02', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_02','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_02','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_02','active_violations_debug_info')
+              }}
           - type: markdown
-            content: '### Test 03: on ONLY if switch1 2 qnd 3 are On but switch4 Off (switch4 hardcoded)'
+            content: '### Test 03: Logic AND (Expected ON + Template Always True)'
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -353,16 +403,41 @@ views:
                         entity_id: binary_sensor.lab_test_output_03
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_03','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_03','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_03', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_03','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_03','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_03','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_03', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_03', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_03','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_03','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_03','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_03','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_03','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_03','ignored_violations') }}  
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_03', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_03','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_03','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_03','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_03', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_03','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_03','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_03','active_violations_debug_info')
+              }}
           - type: markdown
             content: >-
-              ### Test 04: Reboot Persistence: Exp On/Off, Grace 5min (1st switch) or 5 sec, add a 5min snooze to test that too
+              ### Test 04: Exp On/Off - 2 targets (a/b grace 5min + c/d grace
+              5sec); Sev=Critical - use for testing reboot persistence
           - type: horizontal-stack
             cards:
               - type: vertical-stack
@@ -472,13 +547,37 @@ views:
                         entity_id: binary_sensor.lab_test_output_04
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_04','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_04','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_04', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_04','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_04','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_04','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_04', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_04', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_04','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_04','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_04','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_04','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_04','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_04','ignored_violations') }}  
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_04', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_04','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_04','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_04','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_04', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_04','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_04','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_04','active_violations_debug_info')
+              }}
           - type: markdown
             content: >-
               ### Test 05: Logic NOT (Expected Not Off) (allow* are left default
@@ -592,13 +691,37 @@ views:
                         entity_id: binary_sensor.lab_test_output_05
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_05','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_05','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_05', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_05','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_05','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_05','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_05', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_05', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_05','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_05','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_05','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_05','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_05','active_count') } --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_05','ignored_violations') }} } 
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_05', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_05','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_05','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_05','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_05', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_05','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_05','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_05','active_violations_debug_info')
+              }}
           - type: markdown
             content: '### Test 06: Allow Unavailable, Expected On ; Sev = 40 '
           - type: horizontal-stack
@@ -710,13 +833,37 @@ views:
                         entity_id: binary_sensor.lab_test_output_06
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_06','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_06','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_06', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_06','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_06','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_06','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_06', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_06', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_06','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_06','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_06','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_06','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_06','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_06','ignored_violations') }}  
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_06', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_06','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_06','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_06','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_06', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_06','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_06','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_06','active_violations_debug_info')
+              }}
           - type: markdown
             content: '### Test 07: Expected On; Group Grace (20s)'
           - type: horizontal-stack
@@ -828,13 +975,37 @@ views:
                         entity_id: binary_sensor.lab_test_output_07
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_07','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_07','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_07', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_07','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_07','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_07','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_07', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_07', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_07','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_07','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_07','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_07','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_07','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_07','ignored_violations') }}  
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_07', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_07','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_07','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_07','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_07', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_07','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_07','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_07','active_violations_debug_info')
+              }}
           - type: markdown
             content: '### Test 08: Value Template { states(target_entity) == "on" }'
           - type: horizontal-stack
@@ -859,7 +1030,7 @@ views:
                           action: call-service
                           service: compliance_manager.snooze
                           service_data:
-                            entity_id: binary_sensor.lab_test_output_07
+                            entity_id: binary_sensor.lab_test_output_08
                             sub_entities: switch.compliance_manager_lab_tester_29
                             duration: '00:00:05'
               - type: vertical-stack
@@ -882,7 +1053,7 @@ views:
                           action: call-service
                           service: compliance_manager.snooze
                           service_data:
-                            entity_id: binary_sensor.lab_test_output_07
+                            entity_id: binary_sensor.lab_test_output_08
                             sub_entities: switch.compliance_manager_lab_tester_30
                             duration: '00:00:05'
               - type: vertical-stack
@@ -905,7 +1076,7 @@ views:
                           action: call-service
                           service: compliance_manager.snooze
                           service_data:
-                            entity_id: binary_sensor.lab_test_output_07
+                            entity_id: binary_sensor.lab_test_output_08
                             sub_entities: switch.compliance_manager_lab_tester_31
                             duration: '00:00:05'
               - type: vertical-stack
@@ -928,7 +1099,7 @@ views:
                           action: call-service
                           service: compliance_manager.snooze
                           service_data:
-                            entity_id: binary_sensor.lab_test_output_07
+                            entity_id: binary_sensor.lab_test_output_08
                             sub_entities: switch.compliance_manager_lab_tester_32
                             duration: '00:00:05'
               - type: vertical-stack
@@ -946,13 +1117,37 @@ views:
                         entity_id: binary_sensor.lab_test_output_08
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_08','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_08','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_08', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_08','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_08','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_08','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_08', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_08', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_08','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_08','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_08','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_08','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_08','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_08','ignored_violations') }}  
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_08', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_08','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_08','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_08','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_08', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_08','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_08','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_08','active_violations_debug_info')
+              }}
           - type: markdown
             content: '### Test 09: Allow Unknown, Expected On'
           - type: horizontal-stack
@@ -1064,13 +1259,37 @@ views:
                         entity_id: binary_sensor.lab_test_output_09
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_09','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_09','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_09', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_09','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_09','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_09','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_09', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_09', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_09','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_09','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_09','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_09','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_09','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_09','ignored_violations') }}  
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_09', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_09','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_09','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_09','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_09', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_09','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_09','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_09','active_violations_debug_info')
+              }}
           - type: markdown
             content: >-
               ### Test 10: Logic AND-NOT (Expected on and not off); composite
@@ -1184,10 +1403,34 @@ views:
                         entity_id: binary_sensor.lab_test_output_10
                         duration: '00:00:05'
           - type: markdown
-            content: |
-              - **status:** {{ state_attr('binary_sensor.lab_test_output_10','status') }}  ---  **active_count:** {{ state_attr('binary_sensor.lab_test_output_10','active_count') }}  ---  **Severity:** {{ state_attr('binary_sensor.lab_test_output_10', 'severity') }}  ---  **severity_label:** {{ state_attr('binary_sensor.lab_test_output_10','severity_label') }}  ---  **write_operations:** {{ state_attr('binary_sensor.lab_test_output_10','write_operations') }}  ---  **grace_periods:** {{ state_attr('binary_sensor.lab_test_output_10','grace_periods') }}
-              - **snooze_registry:** {{ state_attr('binary_sensor.lab_test_output_10', 'snooze_registry') }}
-              - **Active Violations:** {{ state_attr('binary_sensor.lab_test_output_10', 'active_count') }}
-              - **violations_registry:** {{ state_attr('binary_sensor.lab_test_output_10','violations_registry') }}
-              - **tracked_entities:** {{ state_attr('binary_sensor.lab_test_output_10','tracked_entities') }}
-              - **active_violations_debug_info:** {{ state_attr('binary_sensor.lab_test_output_10','active_violations_debug_info') }}
+            content: >
+              - **status:** {{
+              state_attr('binary_sensor.lab_test_output_10','status') }}  --- 
+              **active_count:** {{
+              state_attr('binary_sensor.lab_test_output_10','active_count') }} --- 
+              **ignored_count:** {{
+              state_attr('binary_sensor.lab_test_output_10','ignored_violations') }}  
+              ---  **Severity:** {{
+              state_attr('binary_sensor.lab_test_output_10', 'severity') }} 
+              ---  **severity_label:** {{
+              state_attr('binary_sensor.lab_test_output_10','severity_label')
+              }}  ---  **write_operations:** {{
+              state_attr('binary_sensor.lab_test_output_10','write_operations')
+              }}  ---  **grace_periods:** {{
+              state_attr('binary_sensor.lab_test_output_10','grace_periods') }}
+
+              - **snooze_registry:** {{
+              state_attr('binary_sensor.lab_test_output_10', 'snooze_registry')
+              }}
+
+              - **violations_registry:** {{
+              state_attr('binary_sensor.lab_test_output_10','violations_registry')
+              }}
+
+              - **tracked_entities:** {{
+              state_attr('binary_sensor.lab_test_output_10','tracked_entities')
+              }}
+
+              - **active_violations_debug_info:** {{
+              state_attr('binary_sensor.lab_test_output_10','active_violations_debug_info')
+              }}
